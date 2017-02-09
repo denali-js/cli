@@ -2,7 +2,7 @@ import ora from 'ora';
 
 let spinner = ora('');
 
-let operations = {
+let operations: { [method: string]: (...args: any[]) => void } = {
   start(msg: string): void {
     spinner.text = msg;
     spinner.start();
@@ -22,6 +22,6 @@ let operations = {
   }
 };
 
-process.on('message', (data) => {
+process.on('message', (data: any) => {
   operations[data.operation](...data.args);
 });

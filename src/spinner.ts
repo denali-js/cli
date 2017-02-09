@@ -1,7 +1,7 @@
 import { fork, ChildProcess } from 'child_process';
 import path from 'path';
 
-let childSpinner;
+let childSpinner: ChildProcess;
 
 function startChildSpinner() {
   childSpinner = fork(path.join(__dirname, 'spinner-child.js'));

@@ -14,18 +14,9 @@
       "outDir": "dist",
       "lib": ["es2017"],
       "baseUrl": ".",
-      "skipLibCheck": true,
-      "paths": {
-        "denali": [ "lib/index.ts" ]
-      }
+      "skipLibCheck": true
   },
   "include": [
-    "lib/**/*",
-    "app/**/*",
-    "blueprints/*/index.ts",
-    "commands/**/*",
-    "config/**/*",
-    "test/**/*"
-  ],
-  "exclude": [ "blueprints/*/files/**" ]
+    "src/**/*"
+  ]
 }

@@ -33,11 +33,14 @@ export default function run(isLocal: boolean)  {
   // Find addon commands
   let coreCommands: { [key: string]: any };
   if (isLocal) {
-    let addons = findPlugins('denali-addon');
-    addons.forEach((addonDir) => {
-      let addonPkg = require(path.join(addonDir, 'package.json'));
-      let addonCommands = discoverCommands(addonPkg.name, path.join(addonDir, 'commands'));
-      if (addonPkg.name === 'denali') {
+    let addons = findPlugins({
+      sort: true,
+      configName: 'denali',
+      keyword: 'denali-addon'
+    });
+    addons.forEach((addon) => {
+      let addonCommands = discoverCommands(addon.pkg.name, path.join(addon.dir, 'commands'));
+      if (addon.pkg.name === 'denali') {
         coreCommands = addonCommands;
       } else {
         commands = Object.assign(commands, addonCommands);
@@ -58,8 +61,8 @@ function discoverCommands(addonName: string, dir: string) {
     return {};
   }
   // Load the commands
-  let Commands = flatten(requireDirectory(dir, {
-    visit: (mod) => mod.default || mod
+  let Commands: { [key: string]: any } = flatten(requireDirectory(dir, {
+    visit: (mod: any) => mod.default || mod
   }));
   // Map them by their command name
   Commands = mapKeys(Commands, (CommandClass) => CommandClass.commandName);

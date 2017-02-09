@@ -8,6 +8,7 @@ import MergeTree from 'broccoli-merge-trees';
 import PackageTree from './package-tree';
 import Project from './project';
 import createDebug from 'debug';
+import findPlugins, { PluginSummary } from 'find-plugins';
 
 const debug = createDebug('denali:builder');
 
@@ -138,9 +139,9 @@ export default class Builder {
   /**
    * A list of directories containing addons that are children to this package
    *
-   * @type {string[]}
+   * @type {PluginSummary[]}
    */
-  addons: string[];
+  addons: PluginSummary[];
 
   /**
    * If true, when the root Project is built, it will create a child Project for this package,
@@ -165,7 +166,11 @@ export default class Builder {
     this.dir = dir;
     this.pkg = require(path.join(this.dir, 'package.json'));
     this.project = project;
-    this.addons = discoverAddons(this.dir, { preseededAddons, root: this.project.dir });
+    this.addons = findPlugins({
+      modulesDir: path.join(this.dir, 'node_modules'),
+      pkg: path.join(this.dir, 'package.json'),
+      include: preseededAddons
+    });
   }
 
   /**
@@ -261,7 +266,7 @@ export default class Builder {
     let tree = this._prepareSelf();
 
     // Find child addons
-    this.childBuilders = this.addons.map((addonDir) => Builder.createFor(addonDir, this.project));
+    this.childBuilders = this.addons.map((addon) => Builder.createFor(addon.dir, this.project));
 
     // Run processParent hooks
     this.childBuilders.forEach((builder) => {

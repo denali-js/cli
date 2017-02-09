@@ -12,6 +12,7 @@ import { sync as isDirectory } from 'is-directory';
 import Project from './project';
 import { Options as YargsOptions } from 'yargs';
 import ui from './ui';
+import findPlugins, { PluginSummary } from 'find-plugins';
 
 interface BlueprintsCollection {
   [blueprintName: string]: string;
@@ -50,12 +51,18 @@ export default class Blueprint {
    * @returns {BlueprintsCollection}
    */
   static findBlueprints(project: Project): BlueprintsCollection {
-    let addons = discoverAddons(project.dir);
+    let addons = findPlugins({
+      modulesDir: path.join(project.dir, 'node_modules'),
+      pkg: path.join(project.dir, 'package.json'),
+      sort: true,
+      configName: 'denali',
+      keyword: 'denali-addon'
+    });
     // Search every addon plus the project package itself, with precedence given to the project
-    let blueprintOrigins = addons.concat([ project.dir ]);
-    return blueprintOrigins.reduce((blueprints, originDir) => {
-      let addonName = require(path.join(originDir, 'package.json')).name;
-      let blueprintDir = path.join(originDir, 'blueprints');
+    let blueprintOrigins = addons.concat([ { dir: project.dir, pkg: project.pkg } ]);
+    return blueprintOrigins.reduce((blueprints: BlueprintsCollection, origin: PluginSummary) => {
+      let addonName = require(path.join(origin.dir, 'package.json')).name;
+      let blueprintDir = path.join(origin.dir, 'blueprints');
       if (isDirectory(blueprintDir)) {
         fs.readdirSync(blueprintDir)
         .filter((filepath) => isDirectory(path.join(blueprintDir, filepath)))
@@ -177,7 +184,7 @@ export default class Blueprint {
    * @param {any} argv
    * @returns {Promise<void>}
    */
-  async generate(argv): Promise<void> {
+  async generate(argv: any): Promise<void> {
     let data = this.locals(argv);
     let dest = process.cwd();
 

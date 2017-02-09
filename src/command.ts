@@ -118,7 +118,7 @@ abstract class Command {
    *
    * @memberOf Command
    */
-  static _run(argv) {
+  static _run(argv: any) {
     let isDenaliProject = this.isDenaliProject();
     if (isDenaliProject && this.runsInApp === false) {
       ui.error('This command can only be run outside an existing Denali project.');
