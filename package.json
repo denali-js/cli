@@ -10,7 +10,7 @@
     "url": "davewasmer.com"
   },
   "bin": {
-    "denali": "bin/denali"
+    "denali": "dist/bin/denali"
   },
   "main": "dist/index.js",
   "engines": {
@@ -28,19 +28,24 @@
     "typescript": "2.2.0"
   },
   "scripts": {
-    "build": "bin/denali build",
-    "coverage": "scripts/coverage.sh",
-    "deploy-docs": "scripts/deploy-docs.sh",
-    "preversion": "scripts/preversion.sh",
-    "release": "scripts/release.sh",
-    "test": "scripts/test.sh",
-    "prepublish": "in-publish && echo \"Use 'denali publish' instead.\" && exit 1 || not-in-publish"
+    "build": "tsc && mv dist/bin/denali.js dist/bin/denali",
+    "prepublish": "in-publish && npm run build || not-in-publish"
   },
   "license": "MIT",
   "dependencies": {
+    "@types/bluebird": "^3.0.37",
+    "@types/debug": "^0.0.29",
+    "@types/findup-sync": "^0.3.29",
     "@types/flat": "^0.0.28",
+    "@types/glob": "^5.0.30",
+    "@types/lodash": "^4.14.52",
+    "@types/mkdirp": "^0.3.29",
     "@types/node": "^7.0.5",
+    "@types/ora": "^0.3.31",
+    "@types/resolve": "^0.0.4",
+    "@types/rimraf": "^0.0.28",
     "@types/semver": "^5.3.30",
+    "@types/source-map-support": "^0.2.28",
     "@types/yargs": "^6.6.0",
     "ava": "^0.18.1",
     "bluebird": "^3.4.7",
