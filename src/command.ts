@@ -1,13 +1,18 @@
-import path from 'path';
-import findup = require('findup-sync');
-import ui from './ui';
-import yargs, { Argv as Yargs, Options as YargsOptions } from 'yargs';
 import {
   forIn,
   forEach,
   padEnd,
-  includes
+  includes,
+  assign,
+  kebabCase
 } from 'lodash';
+import * as path from 'path';
+import findup = require('findup-sync');
+import ui from './ui';
+import yargs, { Argv as Yargs, Options as YargsOptions } from 'yargs';
+import * as createDebug from 'debug';
+
+const debug = createDebug('denali-cli:command');
 
 /**
  * Represents a subcommand of the `denali` CLI.
@@ -23,18 +28,25 @@ abstract class Command {
    * @param {Yargs} yargs
    * @returns {void}
    */
-  static configure(yargs: Yargs): void {
-    yargs.command({
-      command: this.commandName + ' ' + this.params,
+  static configure(yargs: Yargs, context: { name: string, isLocal: boolean }): Yargs {
+    return yargs.command({
+      command: context.name + ' ' + this.params,
       aliases: this.aliases,
-      builder(commandArgs: Yargs) {
-        this.configureOptions(commandArgs);
+      describe: this.description,
+      builder: (commandArgs: Yargs) => {
+        debug(`building options for ${context.name}`);
+        this.configureOptions(commandArgs, context);
+        if (this.configureSubcommands) {
+          this.configureSubcommands(yargs, context);
+        }
         return commandArgs;
       },
-      handler: (argv: any) => {
-        this._run(argv);
+      handler: (args) => {
+        if (this._run) {
+          this._run(context, args);
+        }
       }
-    })
+    });
   }
 
   /**
@@ -43,13 +55,30 @@ abstract class Command {
    * @static
    * @param {any} yargs
    */
-  static configureOptions(yargs: Yargs) {
+  static configureOptions(yargs: Yargs, context: { name: string, isLocal: boolean }) {
     yargs
     .usage(this.longDescription);
     forEach(this.flags, (options, flagName) => {
-      yargs.option(flagName, options);
+      yargs.option(kebabCase(flagName), options);
     });
   }
+
+  /**
+   * Takes the yargs object for this command, gives the command a chance to define any subcommands
+   *
+   * @static
+   * @param {any} yargs
+   */
+  static configureSubcommands: (yargs: Yargs, context: { name: string, isLocal: boolean }) => void;
+
+  /**
+   * The name of the addon that supplied this command. Set by the boostrapping script as it loads
+   * commands.
+   *
+   * @static
+   * @type {string}
+   */
+  static addon: string;
 
   /**
    * The name of the command
@@ -73,7 +102,7 @@ abstract class Command {
    * @static
    * @type {string}
    */
-  static description: string = null;
+  static description: string = '';
 
   /**
    * A longer description when this command's help is invoked, i.e. 'denali foo --help' or
@@ -82,7 +111,7 @@ abstract class Command {
    * @static
    * @type {string}
    */
-  static longDescription: string = null;
+  static longDescription: string = '';
 
   /**
    * Positional params for this command. Should follow yargs syntax for positional params
@@ -113,12 +142,15 @@ abstract class Command {
    * Do some basic checks (i.e. are we obeying runsInApp) then instantiate and run the command
    *
    * @static
-   * @param {any} argv
-   * @returns
+   * @param {any} argv the yargs-parsed command line arguments
+   * @param {any} context additional context provided statically, passed through to the command
+   *                      constructor; useful for blueprints to pass additional, static data
+   * @returns {Promise<void>}
    *
    * @memberOf Command
    */
-  static _run(argv: any) {
+  static async _run(context: any, argv: any): Promise<void> {
+    debug(`enforcing runsInApp setting (${ this.runsInApp })`)
     let isDenaliProject = this.isDenaliProject();
     if (isDenaliProject && this.runsInApp === false) {
       ui.error('This command can only be run outside an existing Denali project.');
@@ -129,10 +161,18 @@ abstract class Command {
       return;
     }
     if (typeof isDenaliProject === 'string') {
+      debug(`command is inside denali project, chdir'ing to root project directory ${ isDenaliProject }`);
       process.chdir(isDenaliProject);
     }
-    let command: Command = new (<any>this)();
-    command.run(argv);
+    let command: Command = new (<any>this)(context);
+    debug('running command');
+    try {
+    await command.run(argv);
+    } catch (e) {
+      ui.error(`Error encountered when running "${ this.commandName }" command`);
+      ui.error(e.stack);
+      process.exit(1);
+    }
   }
 
   /**
@@ -155,13 +195,29 @@ abstract class Command {
   }
 
   /**
-   * Run the command.
+   * Is the command being run inside a denali project?
    *
-   * @abstract
+   * @type {boolean}
+   */
+  isLocal: boolean;
+
+  /**
+   * Creates an instance of Command, assigning any properties on the supplied context object to the
+   * new instance directly.
+   *
+   * @param {*} context
+   */
+  constructor(context: any) {
+    assign(this, context);
+  }
+
+  /**
+   * Run the command. Can be omitted for pure-subcommand only
+   *
    * @param {*} argv
    * @returns {Promise<void>}
    */
-  abstract run(argv: any): Promise<void>;
+  async run(argv: any): Promise<void> {};
 
 }
 

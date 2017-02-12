@@ -1,22 +1,32 @@
 import {
-  template
+  template,
+  forEach,
+  merge,
+  assign,
+  intersection,
+  mapKeys,
+  keys
 } from 'lodash';
-import path from 'path';
-import fs from 'fs';
-import chalk from 'chalk';
-import walk from 'walk-sync';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as chalk from 'chalk';
+import * as walk from 'walk-sync';
 import codeshift from 'jscodeshift';
-import mkdirp from 'mkdirp';
-import rimraf from 'rimraf';
+import * as mkdirp from 'mkdirp';
+import * as rimraf from 'rimraf';
+import * as yargs from 'yargs';
+import requireTree = require('require-tree');
 import { sync as isDirectory } from 'is-directory';
 import Project from './project';
 import { Options as YargsOptions } from 'yargs';
 import ui from './ui';
-import findPlugins, { PluginSummary } from 'find-plugins';
+import findAddons from './find-addons';
+import Command from './command';
+import * as argParser from 'yargs';
+import * as createDebug from 'debug';
+import * as tryRequire from 'try-require';
 
-interface BlueprintsCollection {
-  [blueprintName: string]: string;
-}
+const debug = createDebug('denali-cli:blueprint');
 
 /**
  * The Blueprint class manages generating code from a template, or "blueprint". Blueprints have
@@ -38,143 +48,126 @@ interface BlueprintsCollection {
  *
  * @module denali-cli
  */
-export default class Blueprint {
+export default class Blueprint extends Command {
 
   /**
-   * Given a Project, discover all the available blueprints in that project. This involves looking
-   * up the available addons, and examining each for a blueprints directory. The result is an
-   * object whose keys are the blueprint names, both unscoped and scoped by the addon name, and the
-   * values are the paths to the individual blueprint directories.
+   * Find all available blueprints, and configure the argParser to parse them as commands.
    *
    * @static
-   * @param {Project} project
-   * @returns {BlueprintsCollection}
+   * @param {({ isLocal: boolean, action?: 'generate' | 'destroy' })} context
    */
-  static findBlueprints(project: Project): BlueprintsCollection {
-    let addons = findPlugins({
-      modulesDir: path.join(project.dir, 'node_modules'),
-      pkg: path.join(project.dir, 'package.json'),
-      sort: true,
-      configName: 'denali',
-      keyword: 'denali-addon'
+  static findBlueprints(yargs: yargs.Argv, context: { isLocal: boolean, name: string, action?: 'generate' | 'destroy' }) {
+    // Find all blueprints
+    let blueprints: { [name: string]: typeof Blueprint } = {};
+    let addons = findAddons(context.isLocal);
+    debug('discovering available blueprints');
+    addons.forEach((addon) => {
+      this.discoverBlueprintsForAddon(blueprints, addon.pkg.name, path.join(addon.dir, 'blueprints'));
     });
-    // Search every addon plus the project package itself, with precedence given to the project
-    let blueprintOrigins = addons.concat([ { dir: project.dir, pkg: project.pkg } ]);
-    return blueprintOrigins.reduce((blueprints: BlueprintsCollection, origin: PluginSummary) => {
-      let addonName = require(path.join(origin.dir, 'package.json')).name;
-      let blueprintDir = path.join(origin.dir, 'blueprints');
-      if (isDirectory(blueprintDir)) {
-        fs.readdirSync(blueprintDir)
-        .filter((filepath) => isDirectory(path.join(blueprintDir, filepath)))
-        .forEach((blueprintName) => {
-          // Add each blueprint under it's addon namespace, and without the
-          // namespace, so that the last addon (or the app) will win in case of
-          // collisions.
-          blueprints[`${ addonName }:${ blueprintName }`] = path.join(blueprintDir, blueprintName);
-          blueprints[blueprintName] = path.join(blueprintDir, blueprintName);
-        });
+    // Configure a yargs instance with a command for each one
+    forEach(blueprints, (BlueprintClass: typeof Blueprint, name: string): void => {
+      try {
+        debug(`configuring ${ BlueprintClass.blueprintName } blueprint (invocation: "${ name }")`);
+        BlueprintClass.configure(yargs, merge({}, context, { name }));
+      } catch (error) {
+        ui.warn(`${ name } blueprint failed to configure itself:`);
+        ui.warn(error.stack);
       }
-      return blueprints;
-    }, {});
+    });
   }
 
   /**
-   * Factory function that creates an instance of the named blueprint
+   * Given an addon's name and source directory, load all the blueprints that addon may supply
    *
    * @static
-   * @param {Project} project
-   * @param {string} name
-   * @returns {(Blueprint | false)}
-   */
-  static instanceFor(project: Project, name: string): Blueprint | false {
-    let blueprints = this.findBlueprints(project);
-    let blueprintDir = blueprints[name];
-    if (!blueprintDir) {
-      return false;
-    }
-    let BlueprintClass = require(blueprintDir);
-    BlueprintClass = BlueprintClass.default || BlueprintClass;
-    return new BlueprintClass(blueprintDir);
-  }
-
-  /**
-   * Description of what the blueprint does. Displayed when `denali generate` is run without
-   * arguments.
-   *
-   * @static
-   * @type {string}
-   */
-  static description: string;
-
-  /**
-   * The absolute filepath to this blueprint's directory, which should contain an index.js and
-   * `files/` directory
-   *
-   * @type {string}
-   */
-  dir: string;
-
-  /**
-   * Positional params for this blueprint; should follow yargs syntax for positional params
-   *
-   * @type {string}
-   */
-  params: string = '';
-
-  /**
-   * The options supported by this blueprint; keys should be the flag name, and the value should
-   * be settings for yargs.option()
-   *
-   * @type {{ [flagName: string]: YargsOptions}}
-   */
-  flags: { [flagName: string]: YargsOptions} = {};
-
-  /**
-   * Creates a Blueprint instance based on the supplied blueprint directory
-   *
+   * @param {string} addonName
    * @param {string} dir
+   * @returns
    */
-  constructor(dir: string) {
-    this.dir = dir;
+  static discoverBlueprintsForAddon(blueprintsSoFar: { [blueprintName: string]: typeof Blueprint }, addonName: string, dir: string) {
+    if (!fs.existsSync(dir)) {
+      return {};
+    }
+    // Load the blueprints
+    let Blueprints = fs.readdirSync(dir)
+      .filter((dirname) => isDirectory(path.join(dir, dirname)))
+      .reduce<{ [key: string]: typeof Blueprint }>((BlueprintsSoFar, dirname: string) => {
+        let BlueprintClass = tryRequire(path.join(dir, dirname));
+        BlueprintClass.addon = addonName;
+        BlueprintsSoFar[dirname] = BlueprintClass.default || BlueprintClass;
+        return BlueprintsSoFar;
+      }, {});
+    // Capture the source directory of the blueprint
+    forEach(Blueprints, (BlueprintClass, blueprintDir) => {
+      BlueprintClass.dir = path.join(dir, blueprintDir);
+    });
+    // Then use the blueprintName as the invocation name, if provided (otherwise, fallback to the
+    // directory name
+    Blueprints = mapKeys(Blueprints, (BlueprintClass, blueprintDir) => BlueprintClass.blueprintName || blueprintDir);
+    debug(`found ${ keys(Blueprints).length } blueprints for ${ addonName }: [ ${ keys(Blueprints).join (', ') } ]`);
+    // Move any already-loaded blueprints with the same name as these new ones under an addon-scoped
+    // namespace
+    intersection(keys(Blueprints), keys(blueprintsSoFar)).forEach((collidingBlueprintName: string) => {
+      let clobberedBlueprint = blueprintsSoFar[collidingBlueprintName];
+      blueprintsSoFar[clobberedBlueprint.addon + ':' + collidingBlueprintName] = clobberedBlueprint;
+    });
+    // Also create a map with the blueprint names scoped to the addon name
+    return assign(blueprintsSoFar, Blueprints);
+  }
+
+  static configure(yargs: yargs.Argv, context: { name: string, isLocal: boolean }): yargs.Argv {
+    return super.configure(yargs, context)
+      .updateStrings({
+        'Commands:': 'Available Blueprints:'
+      });
   }
 
   /**
-   * A hook to generate data to be interpolated into the blueprint's template files.
+   * The name used to invoke this blueprint.
    *
-   * @param {*} argv the parsed arguments from the command line
-   * @returns {*}
-   */
-  locals(argv: any): any {
-    return {};
-  }
-
-  /**
-   * Runs after the templating step is complete, letting you make additional modifications (i.e.
-   * install a node module).
-   *
-   * @param {*} argv
-   * @returns {Promise<void>}
-   */
-  async postInstall(argv: any): Promise<void> {}
-
-  /**
-   * Runs when `denali destroy` is invoked, after the applicable template files have been removed.
-   * You should clean up / reverse any changes made in postInstall(), but only in a way that avoids
-   * removing user modifications.
-   *
-   * @param {*} argv
-   * @returns {Promise<void>}
-   */
-  async postUninstall(argv: any): Promise<void> {}
-
-  /**
-   * Returns the path to this blueprints template files directory. Defaults to `files/`.
-   *
-   * @readonly
+   * @static
    * @type {string}
    */
-  get templateFiles(): string {
-    return path.join(this.dir, 'files');
+  static blueprintName: string;
+
+  /**
+   * The source directory for this blueprints
+   *
+   * @static
+   * @type {string}
+   */
+  static dir: string;
+
+  /**
+   * Should we generate or destroy this blueprint?
+   *
+   * @type {('generate' | 'destroy')}
+   */
+  action: 'generate' | 'destroy';
+
+  /**
+   * Is this blueprint being run inside a Denali project?
+   *
+   * @type {boolean}
+   */
+  isLocal: boolean;
+
+  /**
+   * Immediately delegates to either generate or destroy
+   *
+   * @param {*} argv
+   * @returns
+   */
+  async run(argv: any) {
+    try {
+      if (this.action === 'generate') {
+        await  this.generate(argv);
+      } else {
+        await this.destroy(argv);
+      }
+    } catch (e) {
+      console.log(e.stack);
+    }
   }
 
   /**
@@ -214,6 +207,7 @@ export default class Blueprint {
       fs.writeFileSync(destAbsolutepath, contentsTemplate(data));
       ui.info(`${ chalk.green('create') } ${ destRelativepath }`);
     });
+
 
     await this.postInstall(argv);
   }
@@ -273,6 +267,45 @@ export default class Blueprint {
 
     filesToDelete.forEach((file) => rimraf.sync(file));
     await this.postUninstall(argv);
+  }
+
+  /**
+   * A hook to generate data to be interpolated into the blueprint's template files.
+   *
+   * @param {*} argv the parsed arguments from the command line
+   * @returns {*}
+   */
+  locals(argv: any): any {
+    return {};
+  }
+
+  /**
+   * Runs after the templating step is complete, letting you make additional modifications (i.e.
+   * install a node module).
+   *
+   * @param {*} argv
+   * @returns {Promise<void>}
+   */
+  async postInstall(argv: any): Promise<void> {}
+
+  /**
+   * Runs when `denali destroy` is invoked, after the applicable template files have been removed.
+   * You should clean up / reverse any changes made in postInstall(), but only in a way that avoids
+   * removing user modifications.
+   *
+   * @param {*} argv
+   * @returns {Promise<void>}
+   */
+  async postUninstall(argv: any): Promise<void> {}
+
+  /**
+   * Returns the path to this blueprints template files directory. Defaults to `files/`.
+   *
+   * @readonly
+   * @type {string}
+   */
+  get templateFiles(): string {
+    return path.join((<typeof Blueprint>this.constructor).dir, 'files');
   }
 
   /**
