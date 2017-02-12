@@ -1,13 +1,13 @@
 import {
   upperFirst
 } from 'lodash';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import Funnel from 'broccoli-funnel';
 import MergeTree from 'broccoli-merge-trees';
 import PackageTree from './package-tree';
 import Project from './project';
-import createDebug from 'debug';
+import * as createDebug from 'debug';
 import findPlugins, { PluginSummary } from 'find-plugins';
 
 const debug = createDebug('denali:builder');

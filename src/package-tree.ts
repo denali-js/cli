@@ -1,11 +1,11 @@
 import {
   cloneDeep
 } from 'lodash';
-import path from 'path';
-import fs from 'fs';
-import Plugin from 'broccoli-plugin';
-import glob from 'glob';
-import mkdirp from 'mkdirp';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as Plugin from 'broccoli-plugin';
+import * as glob from 'glob';
+import * as mkdirp from 'mkdirp';
 import Builder, { Tree } from './builder';
 
 /**

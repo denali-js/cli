@@ -4,20 +4,20 @@ import {
   dropWhile,
   takeWhile
 } from 'lodash';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import dedent from 'dedent-js';
 import nsp from 'nsp';
 import broccoli from 'broccoli';
-import rimraf from 'rimraf';
+import * as rimraf from 'rimraf';
 import printSlowNodes from 'broccoli-slow-trees';
 import { sync as copyDereferenceSync } from 'copy-dereference';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import MergeTree from 'broccoli-merge-trees';
 import Funnel from 'broccoli-funnel';
-import createDebug from 'debug';
+import * as createDebug from 'debug';
 import tryRequire from 'try-require';
-import semver from 'semver';
+import * as semver from 'semver';
 import Builder, { Tree } from './builder';
 import Watcher from './watcher';
 import ui from './ui';
@@ -26,7 +26,7 @@ import startTimer from './timer';
 
 const debug = createDebug('denali:project');
 
-interface ProjectOptions {
+export interface ProjectOptions {
   dir?: string;
   environment?: string;
   printSlowTrees?: boolean;
@@ -35,13 +35,13 @@ interface ProjectOptions {
   buildDummy?: boolean;
 }
 
-interface WatchOptions {
+export interface WatchOptions {
   outputDir: string;
   onBuild?: (project: Project) => void;
   beforeRebuild?:  () => Promise<void> | void;
 }
 
-interface Vulnerability {
+export interface Vulnerability {
   path: string[];
   module: string;
   version: string;

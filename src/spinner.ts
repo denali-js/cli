@@ -1,5 +1,5 @@
 import { fork, ChildProcess } from 'child_process';
-import path from 'path';
+import * as path from 'path';
 
 let childSpinner: ChildProcess;
 
