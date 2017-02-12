@@ -1,13 +1,12 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+      "declaration": true,
       "module": "commonjs",
       "moduleResolution": "node",
       "target": "es6",
       "noImplicitAny": true,
       "sourceMap": false,
-      "allowJs": true,
-      "allowSyntheticDefaultImports": true,
       "importHelpers": true,
       "inlineSourceMap": true,
       "inlineSources": true,
