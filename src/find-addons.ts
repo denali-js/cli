@@ -18,7 +18,7 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
 
   if (isLocal) {
     return findPlugins(merge({
-      modulesDir: path.join(process.cwd(), 'node_modules')
+      modulesDir: path.join(process.cwd(), 'node_modules'),
     }, findOptions));
   }
 

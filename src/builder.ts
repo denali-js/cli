@@ -3,14 +3,14 @@ import {
 } from 'lodash';
 import * as fs from 'fs';
 import * as path from 'path';
-import Funnel from 'broccoli-funnel';
-import MergeTree from 'broccoli-merge-trees';
+import * as Funnel from 'broccoli-funnel';
+import * as MergeTree from 'broccoli-merge-trees';
 import PackageTree from './package-tree';
 import Project from './project';
 import * as createDebug from 'debug';
 import findPlugins, { PluginSummary } from 'find-plugins';
 
-const debug = createDebug('denali:builder');
+const debug = createDebug('denali-cli:builder');
 
 export interface Tree {}
 

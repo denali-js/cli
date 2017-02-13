@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import dedent from 'dedent-js';
 import nsp from 'nsp';
-import broccoli from 'broccoli';
+import * as broccoli from 'broccoli';
 import * as rimraf from 'rimraf';
 import printSlowNodes from 'broccoli-slow-trees';
 import { sync as copyDereferenceSync } from 'copy-dereference';
@@ -24,7 +24,7 @@ import ui from './ui';
 import spinner from './spinner';
 import startTimer from './timer';
 
-const debug = createDebug('denali:project');
+const debug = createDebug('denali-cli:project');
 
 export interface ProjectOptions {
   dir?: string;
@@ -222,15 +222,16 @@ export default class Project {
     let timer = startTimer();
     try {
       let results = await broccoliBuilder.build();
+      debug('broccoli build finished');
       this.finishBuild(results, outputDir);
+      debug('build finalized');
       spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
     } catch (err) {
-      ui.error('');
+      spinner.fail('Build failed');
       if (err.file) {
         ui.error(`File: ${ err.file }`);
       }
       ui.error(err.stack);
-      spinner.fail('Build failed');
       throw err;
     } finally {
       await broccoliBuilder.cleanup();

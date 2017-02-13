@@ -17,7 +17,7 @@ import findAddons from './find-addons';
 import * as dedent from 'dedent-js';
 import * as tryRequire from 'try-require';
 
-const debug = createDebug('denali-cli:commands:index');
+const debug = createDebug('denali-cli:bootstrap');
 
 /**
  * Kicks off the Denali CLI. Discovers any addons in this project, and builds a list of all commands
@@ -29,7 +29,6 @@ const debug = createDebug('denali-cli:commands:index');
  * @param {boolean} isLocal
  */
 export default function run(isLocal: boolean)  {
-  debugger;
   debug('discovering commands from addons');
   let commands: { [key: string]: typeof Command } = {};
   let coreCommands: { [key: string]: typeof Command };
@@ -89,9 +88,6 @@ export default function run(isLocal: boolean)  {
     return versions.join(`\n`);
   })
   .parse(process.argv);
-
-  debug('no command invoked, printing help message');
-  argParser.showHelp();
 }
 
 function discoverCommands(commandsSoFar: { [commandName: string]: typeof Command }, addonName: string, dir: string) {
