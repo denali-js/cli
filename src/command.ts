@@ -136,7 +136,7 @@ abstract class Command {
    * @static
    * @type {boolean}
    */
-  static runsInApp: boolean = false;
+  static runsInApp: boolean;
 
   /**
    * Do some basic checks (i.e. are we obeying runsInApp) then instantiate and run the command
@@ -167,11 +167,10 @@ abstract class Command {
     let command: Command = new (<any>this)(context);
     debug('running command');
     try {
-    await command.run(argv);
+      await command.run(argv);
     } catch (e) {
       ui.error(`Error encountered when running "${ this.commandName }" command`);
       ui.error(e.stack);
-      process.exit(1);
     }
   }
 
