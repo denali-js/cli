@@ -19,12 +19,12 @@ export default {
     run('start', msg);
   },
   succeed(msg?: string): void {
-    run('start', msg);
+    run('succeed', msg);
   },
   fail(msg?: string): void {
-    run('start', msg);
+    run('fail', msg);
   },
   finish(symbol: string, text: string): void {
-    run('start', symbol, text);
+    run('finish', symbol, text);
   }
 };
