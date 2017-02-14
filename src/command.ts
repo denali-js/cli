@@ -151,18 +151,18 @@ abstract class Command {
    */
   public static async _run(context: any, argv: any): Promise<void> {
     debug(`enforcing runsInApp setting (${ this.runsInApp })`)
-    let isDenaliProject = this.isDenaliProject();
-    if (isDenaliProject && this.runsInApp === false) {
+    if (context.isLocal && this.runsInApp === false) {
       ui.error('This command can only be run outside an existing Denali project.');
       return;
     }
-    if (!isDenaliProject && this.runsInApp === true) {
+    if (!context.isLocal && this.runsInApp === true) {
       ui.error('This command can only be run inside an existing Denali project.');
       return;
     }
-    if (typeof isDenaliProject === 'string') {
-      debug(`command is inside denali project, chdir'ing to root project directory ${ isDenaliProject }`);
-      process.chdir(isDenaliProject);
+    if (context.isLocal) {
+      let projectRoot =path.resolve(path.dirname(findup('package.json')));
+      debug(`command is inside denali project, chdir'ing to root project directory ${ projectRoot }`);
+      process.chdir(projectRoot);
     }
     let command: Command = new (<any>this)(context);
     debug('running command');
