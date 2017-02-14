@@ -28,7 +28,7 @@ abstract class Command {
    * @param {Yargs} yargs
    * @returns {void}
    */
-  static configure(yargs: Yargs, context: { name: string, isLocal: boolean }): Yargs {
+  public static configure(yargs: Yargs, context: { name: string, isLocal: boolean }): Yargs {
     return yargs.command({
       command: context.name + ' ' + this.params,
       aliases: this.aliases,
@@ -55,7 +55,7 @@ abstract class Command {
    * @static
    * @param {any} yargs
    */
-  static configureOptions(yargs: Yargs, context: { name: string, isLocal: boolean }) {
+  protected static configureOptions(yargs: Yargs, context: { name: string, isLocal: boolean }) {
     yargs
     .usage(this.longDescription);
     forEach(this.flags, (options, flagName) => {
@@ -69,7 +69,7 @@ abstract class Command {
    * @static
    * @param {any} yargs
    */
-  static configureSubcommands: (yargs: Yargs, context: { name: string, isLocal: boolean }) => void;
+  protected static configureSubcommands: (yargs: Yargs, context: { name: string, isLocal: boolean }) => void;
 
   /**
    * The name of the addon that supplied this command. Set by the boostrapping script as it loads
@@ -78,7 +78,7 @@ abstract class Command {
    * @static
    * @type {string}
    */
-  static addon: string;
+  public static addon: string;
 
   /**
    * The name of the command
@@ -86,7 +86,7 @@ abstract class Command {
    * @static
    * @type {string}
    */
-  static commandName: string;
+  public static commandName: string;
 
   /**
    * An array of possible aliases for this command's name
@@ -94,7 +94,7 @@ abstract class Command {
    * @static
    * @type {string[]}
    */
-  static aliases: string[];
+  public static aliases: string[];
 
   /**
    * Description of what the command does. Displayed when the root help message prints
@@ -102,7 +102,7 @@ abstract class Command {
    * @static
    * @type {string}
    */
-  static description: string = '';
+  public static description: string = '';
 
   /**
    * A longer description when this command's help is invoked, i.e. 'denali foo --help' or
@@ -111,7 +111,7 @@ abstract class Command {
    * @static
    * @type {string}
    */
-  static longDescription: string = '';
+  public static longDescription: string = '';
 
   /**
    * Positional params for this command. Should follow yargs syntax for positional params
@@ -119,7 +119,7 @@ abstract class Command {
    * @static
    * @type {string}
    */
-  static params: string = '';
+  public static params: string = '';
 
   /**
    * An object whose keys are flag names, and values are yargs.option settings
@@ -127,7 +127,7 @@ abstract class Command {
    * @static
    * @type {{ [flagName: string]: YargsOptions }}
    */
-  static flags: { [flagName: string]: YargsOptions } = {};
+  public static flags: { [flagName: string]: YargsOptions } = {};
 
   /**
    * If true, Denali will require that this command be run inside an existing app. If false, running
@@ -136,7 +136,7 @@ abstract class Command {
    * @static
    * @type {boolean}
    */
-  static runsInApp: boolean;
+  public static runsInApp: boolean;
 
   /**
    * Do some basic checks (i.e. are we obeying runsInApp) then instantiate and run the command
@@ -149,7 +149,7 @@ abstract class Command {
    *
    * @memberOf Command
    */
-  static async _run(context: any, argv: any): Promise<void> {
+  public static async _run(context: any, argv: any): Promise<void> {
     debug(`enforcing runsInApp setting (${ this.runsInApp })`)
     let isDenaliProject = this.isDenaliProject();
     if (isDenaliProject && this.runsInApp === false) {
@@ -175,30 +175,11 @@ abstract class Command {
   }
 
   /**
-   * Checks if the cwd is inside a Denali project
-   *
-   * @private
-   * @static
-   * @returns {(string | boolean)}
-   */
-  private static isDenaliProject(): string | boolean {
-    let pkgpath = findup('package.json');
-    if (pkgpath) {
-      const pkg = require(path.resolve(pkgpath));
-      let isApp = pkg.dependencies && pkg.dependencies.denali;
-      let isAddon = pkg.keywords && pkg.keywords.includes('denali-addon');
-      let inTmp = path.relative(path.dirname(pkgpath), process.cwd()).startsWith('tmp');
-      return (isApp || isAddon) && !inTmp ? path.resolve(path.dirname(pkgpath)) : false;
-    }
-    return false;
-  }
-
-  /**
    * Is the command being run inside a denali project?
    *
    * @type {boolean}
    */
-  isLocal: boolean;
+  public isLocal: boolean;
 
   /**
    * Creates an instance of Command, assigning any properties on the supplied context object to the
@@ -216,7 +197,7 @@ abstract class Command {
    * @param {*} argv
    * @returns {Promise<void>}
    */
-  async run(argv: any): Promise<void> {};
+  public async run(argv: any): Promise<void> {};
 
 }
 
