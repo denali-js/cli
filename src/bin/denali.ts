@@ -23,7 +23,7 @@ function loadGlobalCli() {
   let pkg = require('../../package.json');
   console.log('denali-cli ' + pkg.version + ' [global]');
   try {
-    require('../bootstrap').default();
+    require('../bootstrap').default(false);
   } catch (error) {
     console.error('Error encountered while starting up denali-cli:');
     console.error(error.stack);
