@@ -167,8 +167,10 @@ export default class Builder {
     this.pkg = require(path.join(this.dir, 'package.json'));
     this.project = project;
     this.addons = findPlugins({
-      modulesDir: path.join(this.dir, 'node_modules'),
-      pkg: path.join(this.dir, 'package.json'),
+      dir: this.dir,
+      keyword: 'denali-addon',
+      sort: true,
+      configName: 'denali',
       include: preseededAddons
     });
   }

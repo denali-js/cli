@@ -17,14 +17,13 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
   };
 
   if (isLocal) {
-    return findPlugins(merge({
-      modulesDir: path.join(process.cwd(), 'node_modules'),
-    }, findOptions));
+    return findPlugins(findOptions);
   }
 
-  let addons = findPlugins({
-    modulesDir: execSync('npm root -g').toString().trim()
-  });
+  let addons = findPlugins(merge({
+    dir: execSync('npm root -g').toString().trim(),
+    scanAllDirs: true
+  }, findOptions));
 
   // Because yarn stores it's global modules separately, and doesn't yet support the `root` command,
   // we have to double check yarn's global installs for any denali addons. The easiest way of
@@ -34,11 +33,11 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
   // TODO shell out to `yarn root` once yarnpkg/yarn#2388 is fixed
   if (commandExists('yarn')) {
     let globalInstalledYarnAddons = addons.concat(findPlugins(merge({
-      modulesDir: path.join(YarnConstants.GLOBAL_MODULE_DIRECTORY, 'node_modules'),
+      dir: path.join(YarnConstants.GLOBAL_MODULE_DIRECTORY, 'node_modules'),
       scanAllDirs: true
     }, findOptions)));
     let globalLinkedYarnAddons = addons.concat(findPlugins(merge({
-      modulesDir: YarnConstants.LINK_REGISTRY_DIRECTORY,
+      dir: YarnConstants.LINK_REGISTRY_DIRECTORY,
       scanAllDirs: true
     }, findOptions)));
     addons = addons.concat(globalInstalledYarnAddons, globalLinkedYarnAddons);
