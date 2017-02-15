@@ -48,7 +48,6 @@
     "no-unsafe-finally": true,
     "no-unused-new": true,
     "no-var-keyword": true,
-    "no-var-requires": true,
     "no-void-expression": true,
     "object-literal-key-quotes": [ true, "as-needed" ],
     "object-literal-shorthand": true,

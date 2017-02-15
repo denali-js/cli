@@ -4,6 +4,7 @@ process.title = 'denali-spinner';
 
 let spinner = ora('');
 
+// tslint:disable:completed-docs
 let operations: { [method: string]: (...args: any[]) => void } = {
   start(msg: string): void {
     spinner.text = msg;
@@ -26,6 +27,7 @@ let operations: { [method: string]: (...args: any[]) => void } = {
     process.removeAllListeners('message');
   }
 };
+// tslint:enable:completed-docs
 
 process.on('message', (data: any) => {
   operations[data.operation](...data.args);

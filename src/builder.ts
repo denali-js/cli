@@ -12,7 +12,9 @@ import findPlugins, { PluginSummary } from 'find-plugins';
 
 const debug = createDebug('denali-cli:builder');
 
-export interface Tree {}
+// Because it's nice to have a named type for this
+// tslint:disable-next-line:no-empty-interface
+export interface Tree {};
 
 /**
  * The Builder class is responsible for taking a Denali package (an app or an addon), and performing
@@ -37,23 +39,14 @@ export default class Builder {
    * An internal cache that maps real disk locations to Builder instances. This lets us accurately
    * model the deeply nested and even circular dependencies of an app's addon graph, but take
    * advantage of npm/yarn flattening by only using one Builder instance per disk location.
-   *
-   * @static
-   * @type {{ [dir: string]: Builder }}
    */
-  static buildersCache: { [dir: string]: Builder } = {};
+  public static buildersCache: { [dir: string]: Builder } = {};
 
   /**
    * A factory method that checks for a local Builder class in `/denali-build.js`, and instantiates
    * that if present.
-   *
-   * @static
-   * @param {string} dir
-   * @param {Project} project
-   * @param {string[]} [preseededAddons]
-   * @returns {Builder}
    */
-  static createFor(dir: string, project: Project, preseededAddons?: string[]): Builder {
+  public static createFor(dir: string, project: Project, preseededAddons?: string[]): Builder {
     if (!this.buildersCache[dir]) {
       // Use the local denali-build.js if present
       let denaliBuildPath = path.join(dir, 'denali-build');
@@ -86,21 +79,16 @@ export default class Builder {
    * Then adding `[ 'foo', 'bar@~4.2.1' ]` would ignore any vulnerabilities from the "bar" package
    * (as long as the version of "bar" satisfied "~4.2.1"), as well as any vulnerabilities from
    * "buzz"
-   *
-   *
-   * @type {string[]}
    */
-  ignoreVulnerabilities: string[][] = [
+  public ignoreVulnerabilities: string[][] = [
     [ 'broccoli@*' ],
     [ 'jscodeshift@*' ]
   ];
 
   /**
    * A list of files that should be copied as-is into the final build
-   *
-   * @type {string[]}
    */
-  packageFiles: string[] = [
+  public packageFiles: string[] = [
     'package.json',
     'README.md',
     'CHANGELOG.md',
@@ -110,56 +98,40 @@ export default class Builder {
 
   /**
    * A list of directories that should be copied as-is into the final build
-   *
-   * @type {string[]}
    */
-  packageDirs: string[] = [];
+  public packageDirs: string[] = [];
 
   /**
    * The directory containing the package that should be built.
-   *
-   * @type {string}
    */
-  dir: string;
+  public dir: string;
 
   /**
    * The package.json for this package
-   *
-   * @type {*}
    */
-  pkg: any;
+  public pkg: any;
 
   /**
    * The Project instance that represents the root package being built
-   *
-   * @type {Project}
    */
-  project: Project;
+  public project: Project;
 
   /**
    * A list of directories containing addons that are children to this package
-   *
-   * @type {PluginSummary[]}
    */
-  addons: PluginSummary[];
+  public addons: PluginSummary[];
 
   /**
    * If true, when the root Project is built, it will create a child Project for this package,
    * which will watch for changes and trigger a rebuild of this package as well as the root Project.
    *
    * Warning: experimental and highly unstable
-   *
-   * @type {boolean}
    */
-  isDevelopingAddon: boolean = false;
+  public isDevelopingAddon = false;
 
   /**
    * Creates an instance of Builder for the given directory, as a child of the given Project. If
    * preseededAddons are supplied, they will be included as child addons of this Builder instance.
-   *
-   * @param {string} dir
-   * @param {Project} project
-   * @param {string[]} [preseededAddons]
    */
   constructor(dir: string, project: Project, preseededAddons?: string[]) {
     debug(`creating builder for ./${ path.relative(project.dir, dir) }`);
@@ -179,10 +151,8 @@ export default class Builder {
    * Returns an array of top-level directories within this package that should go through the build
    * process. Note that top-level files cannot be built. You can include them (unbuilt) in the final
    * output via the `packageFiles` property; see https://github.com/broccolijs/broccoli/issues/173#issuecomment-47584836
-   *
-   * @returns {string[]}
    */
-  sourceDirs(): string[] {
+  public sourceDirs(): string[] {
     let dirs = [ 'app', 'blueprints', 'commands', 'config', 'lib' ];
     if (this.project.environment === 'test') {
       dirs.push('test');
@@ -193,11 +163,8 @@ export default class Builder {
   /**
    * Generic treeFor method that simply returns the supplied directory as is. You could override
    * this to customize the build process for all files.
-   *
-   * @param {string} dir
-   * @returns {(string | Tree)}
    */
-  treeFor(dir: string): string | Tree {
+  public treeFor(dir: string): string | Tree {
     return dir;
   }
 
@@ -205,10 +172,6 @@ export default class Builder {
   /**
    * Compiles the base build tree which will be passed to the user-defined build hooks. Grabs all
    * the top-level directories to be built, runs the treeFor hooks on each, adds package files
-   *
-   * @private
-   * @returns {Tree}
-   *
    */
   private _prepareSelf(): Tree {
     // Get the various source dirs we'll use. This is important because broccoli
@@ -236,35 +199,29 @@ export default class Builder {
 
   /**
    * An array of builder instances for child addons of this package
-   *
-   * @type {Builder[]}
    */
-  childBuilders: Builder[];
+  public childBuilders: Builder[];
 
   /**
    * Modify the build of the parent package that is consuming this addon.
    *
-   * @param {Tree} tree the tree representing the parent package
-   * @param {string} dir the absolute path to the parent package source
-   * @returns {Tree}
+   * @param tree the tree representing the parent package
+   * @param dir the absolute path to the parent package source
    */
-  processParent: (tree: Tree, dir: string)  => Tree;
+  public processParent: (tree: Tree, dir: string)  => Tree;
 
   /**
    * Modify this package's build
    *
-   * @param {Tree} tree the tree representing the package
-   * @param {string} dir the absolute path to the package source
-   * @returns {Tree}
+   * @param tree the tree representing the package
+   * @param dir the absolute path to the package source
    */
-  processSelf: (tree: Tree, dir: string) => Tree;
+  public processSelf: (tree: Tree, dir: string) => Tree;
 
   /**
    * Return a single broccoli tree that represents the completed build output for this package
-   *
-   * @returns {Tree}
    */
-  toTree(): Tree {
+  public toTree(): Tree {
     let tree = this._prepareSelf();
 
     // Find child addons

@@ -13,8 +13,23 @@
       "isBuildCommand": true
     },
     {
-      "taskName": "install",
-      "args": ["install"]
+      "taskName": "lint",
+      "args": ["run", "lint"],
+      "problemMatcher": {
+        "owner": "external",
+        "fileLocation": [
+          "relative",
+          "${workspaceRoot}"
+        ],
+        "severity": "warning",
+        "pattern": {
+          "regexp": "^(\\S.*)\\[(\\d+), (\\d+)\\]:\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      }
     },
     {
       "taskName": "update",

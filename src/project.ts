@@ -37,8 +37,8 @@ export interface ProjectOptions {
 
 export interface WatchOptions {
   outputDir: string;
-  onBuild?: (project: Project) => void;
-  beforeRebuild?:  () => Promise<void> | void;
+  onBuild?(project: Project): void;
+  beforeRebuild?(): Promise<void> | void;
 }
 
 export interface Vulnerability {
@@ -55,8 +55,6 @@ export interface Vulnerability {
  * Builder instance, which is responsible for building that one node. The Project class coordinates
  * these builders, and produces the final output: a `dist/` folder ready to run.
  *
- * @export
- * @class Project
  * @module denali-cli
  */
 export default class Project {
@@ -65,74 +63,52 @@ export default class Project {
    * An internal cache of builders, stored by their realpath on disk. This allows us to maintain
    * the logical deeply nested, possibly circular dependency graph, while only create a single
    * Builder per real disk location, so we avoid duplication and cycles.
-   *
-   * @type {Map<string, Builder>}
-   * @memberOf Project
    */
-  builders: Map<string, Builder> = new Map();
+  public builders: Map<string, Builder> = new Map();
 
   /**
    * The root dir of the project's package
-   *
-   * @type {string}
    */
-  dir: string;
+  public dir: string;
 
   /**
    * The build target environment, defaults to 'development'
-   *
-   * @type {string}
-   * @default 'development'
    */
-  environment: string;
+  public environment: string;
 
   /**
    * Should we print slow broccoli trees on build?
-   *
-   * @type {boolean}
    */
-  printSlowTrees: boolean;
+  public printSlowTrees: boolean;
 
   /**
    * The package.json for this project's package
-   *
-   * @type {*}
    */
-  pkg: any;
+  public pkg: any;
 
   /**
    * Should we run linting? This is an advisory only flag for linting addons - denali-cli does not
    * enforce this, nor does it have first-class knowledge of addons that perform linting or not.
-   *
-   * @type {boolean}
    */
-  lint: boolean;
+  public lint: boolean;
 
   /**
    * Should we run an nsp audit of the project's dependencies? Defaults to true in development
-   *
-   * @type {boolean}
    */
-  audit: boolean;
+  public audit: boolean;
 
   /**
    * Should we build the dummy app, assuming this is an addon/
-   *
-   * @type {boolean}
    */
-  buildDummy: boolean;
+  public buildDummy: boolean;
 
   /**
    * The root Builder instance that represent's the Project's own package
-   *
-   * @type {Builder}
    */
-  rootBuilder: Builder;
+  protected rootBuilder: Builder;
 
   /**
    * Creates an instance of Project
-   *
-   * @param {ProjectOptions} [options={}]
    */
   constructor(options: ProjectOptions = {}) {
     this.dir = options.dir || process.cwd();
@@ -148,21 +124,16 @@ export default class Project {
 
   /**
    * Is this Project instance for an addon?
-   *
-   * @readonly
-   * @type {boolean}
    */
-  get isAddon(): boolean {
+  protected get isAddon(): boolean {
     return this.pkg.keywords && this.pkg.keywords.includes('denali-addon');
   }
 
   /**
    * Get the root builder and it's tree for this Project. Also returns the broccoli.Builder instance
    * based on the root tree
-   *
-   * @returns {{ builder: Builder, tree: Tree, broccoliBuilder: any }}
    */
-  getBuilderAndTree(): { builder: Builder, tree: Tree, broccoliBuilder: any } {
+  protected getBuilderAndTree(): { builder: Builder, tree: Tree, broccoliBuilder: any } {
     let rootBuilder = this.rootBuilder = Builder.createFor(this.dir, this);
     let rootTree = rootBuilder.toTree();
 
@@ -171,6 +142,7 @@ export default class Project {
     }
 
     let broccoliBuilder = new broccoli.Builder(rootTree);
+    // tslint:disable-next-line:completed-docs
     function onExit() {
       broccoliBuilder.cleanup();
       process.exit(1);
@@ -189,11 +161,8 @@ export default class Project {
   /**
    * Given the root tree for this project, return the dummy app's tree. This creates a Builder for
    * the dummy app itself, plus moves the addon's test suite into the dummy app's tree.
-   *
-   * @param {Tree} rootTree
-   * @returns {Tree}
    */
-  buildDummyTree(rootTree: Tree): Tree {
+  protected buildDummyTree(rootTree: Tree): Tree {
     debug(`building ${ this.pkg.name }'s dummy app`);
     let dummyBuilder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this, [ this.dir ]);
     let dummyTree = dummyBuilder.toTree();
@@ -211,11 +180,8 @@ export default class Project {
   /**
    * Build the project and return a Promise that resolves with the output directory once the build
    * is complete.
-   *
-   * @param {string} [outputDir='dist']
-   * @returns {Promise<string>}
    */
-  async build(outputDir: string = 'dist'): Promise<string> {
+  public async build(outputDir: string = 'dist'): Promise<string> {
     debug('building project');
     let { broccoliBuilder } = this.getBuilderAndTree();
     spinner.start(`Building ${ this.pkg.name }`);
@@ -241,10 +207,8 @@ export default class Project {
 
   /**
    * Build the project and start watching the source files for changes, rebuilding when they occur
-   *
-   * @param {WatchOptions} options
    */
-  watch(options: WatchOptions): void {
+  public watch(options: WatchOptions): void {
     options.outputDir = options.outputDir || 'dist';
     options.onBuild = options.onBuild || noop;
     // Start watcher
@@ -312,10 +276,8 @@ export default class Project {
    * But the documentation is correct here - the resolved value of the promise is an Applciation
    * instance. And consuming apps/addons already have a dependency on denali, so they can cast the
    * return value here to an Application.
-   *
-   * @returns {Promise<Application>}
    */
-  async createApplication(): Promise<any> {
+  public async createApplication(): Promise<any> {
     try {
       let outputDir = await this.build();
       let applicationPath = path.resolve(path.join(outputDir, 'app', 'application'));
@@ -336,11 +298,8 @@ export default class Project {
   /**
    * After a build completes, this method cleans up the result. It copies the results out of tmp and
    * into the output directory, and kicks off any optional behaviors post-build.
-   *
-   * @param {{ directory: string, graph: any }} results
-   * @param {string} outputDir
    */
-  finishBuild(results: { directory: string, graph: any }, outputDir: string) {
+  protected finishBuild(results: { directory: string, graph: any }, outputDir: string) {
     // Copy the result out of broccoli tmp
     if (!path.isAbsolute(outputDir)) {
       outputDir = path.join(process.cwd(), outputDir);
@@ -363,7 +322,7 @@ export default class Project {
    * Run the package.json through nsp to check for any security vulnerabilities, hiding any that
    * match the root builder's `ignoreVulnerabilities` array.
    */
-  auditPackage() {
+  protected auditPackage() {
     let pkg = path.join(this.dir, 'package.json');
     nsp.check({ package: pkg }, (err: any, vulnerabilities: Vulnerability[]) => {
       if (err && [ 'ENOTFOUND', 'ECONNRESET' ].indexOf(err.code) > -1) {
@@ -380,7 +339,12 @@ export default class Project {
     });
   }
 
-  filterIgnoredVulnerabilities(vulnerabilities: Vulnerability[], ignorePatterns: string[][]): Vulnerability[] {
+  /**
+   * Filter the list of vulnerabilities by the ignored vulnerabilities passed in. Each ignore
+   * pattern is an array of packages and versions, forming a path through the dependency graph. See
+   * `Builder.ignoreVulnerabilities` for details.
+   */
+  protected filterIgnoredVulnerabilities(vulnerabilities: Vulnerability[], ignorePatterns: string[][]): Vulnerability[] {
     return vulnerabilities.filter((vulnerability) => {
       return !ignorePatterns.find((ignorePattern) => {
         let ignorePatternStart = ignorePattern[0].split('@');
@@ -401,7 +365,10 @@ export default class Project {
     });
   }
 
-  printVulnerability(vulnerability: Vulnerability) {
+  /**
+   * Print out a humanized warning message for the given vulnerability.
+   */
+  protected printVulnerability(vulnerability: Vulnerability) {
     let dependencyPath = vulnerability.path.join(' => ');
     let module = `*** ${ vulnerability.module }@${ vulnerability.version } ***`;
     let recommendation = (vulnerability.recommendation || '').replace(/\n/g, ' ');

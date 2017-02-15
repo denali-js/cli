@@ -19,6 +19,8 @@ declare module "command-exists";
 declare module "broccoli/lib" {
   class Watcher {
     constructor(tree: any, options: any)
-    detectChanges():string[]
+    detectChanges(): string[];
+    emit: (e: string) => void;
+    on: (e: string, cb: (...args: any[]) => void) => void;
   }
 }

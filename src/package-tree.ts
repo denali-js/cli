@@ -15,47 +15,29 @@ import Builder, { Tree } from './builder';
  * the package root. The drawback is that Broccoli's natural file-watching mechanisms will fail
  * here, but that's typically fine since these files either don't matter at runtime, or would
  * require full restarts anyway.
- *
- * @export
- * @class PackageTree
- * @extends {(<new(...args: any[]) => Tree>Plugin)}
  */
 export default class PackageTree extends (<new(...args: any[]) => Tree>Plugin) {
 
   /**
    * The Builder instance that this PackageTree is part of
-   *
-   * @type {Builder}
    */
-  builder: Builder;
+  protected builder: Builder;
 
   /**
    * The root directory of the package
-   *
-   * @type {string}
    */
-  dir: string;
+  protected dir: string;
 
   /**
    * An array of filepaths that should be copied
-   *
-   * @type {string[]}
    */
-  files: string[];
+  protected files: string[];
 
   /**
    * The destination directory
-   *
-   * @type {string}
    */
-  outputPath: string;
+  protected outputPath: string;
 
-  /**
-   * Creates an instance of PackageTree
-   *
-   * @param {Builder} builder
-   * @param {{ files: string[] }} options
-   */
   constructor(builder: Builder, options: { files: string[] }) {
     super([], options);
     this.builder = builder;
@@ -66,7 +48,7 @@ export default class PackageTree extends (<new(...args: any[]) => Tree>Plugin) {
   /**
    * Copy the package files over
    */
-  build(): void {
+  public build(): void {
     // Copy over any top level files specified
     this.files.forEach((pattern) => {
       glob.sync(pattern, { cwd: this.dir, nodir: true }).forEach((file) => {

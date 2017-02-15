@@ -1,4 +1,4 @@
-import { Tree } from "./builder";
+import { Tree } from './builder';
 import { Watcher } from 'broccoli/lib';
 import { resolve } from 'bluebird';
 import {
@@ -19,23 +19,34 @@ import {
  * So we patch the Watcher class here to allow us to capture and delay the rebuild signal until
  * some arbitrary async condition is fulfilled (in our case, until the test process is completely
  * killed).
- *
- * @export
- * @class PausingWatcher
- * @extends {Watcher}
  */
 export default class PausingWatcher extends Watcher {
 
-  readyForRebuild = false;
-  prebuildInProgress = false;
-  beforeRebuild: () => Promise<void> | void;
+  /**
+   * Is the watcher currently ready to start a rebuild?
+   */
+  public readyForRebuild = false;
 
-  constructor(tree: Tree, options: { beforeRebuild: () => Promise<void> | void, interval: number }) {
+  /**
+   * Is a prebuild currently in progress?
+   */
+  public prebuildInProgress = false;
+
+  /**
+   * Callback invoked when there are changes, but before the rebuild is triggered. If a promise is
+   * returned, the rebuild will wait until the promise resolves before starting.
+   */
+  public beforeRebuild: () => Promise<void> | void;
+
+  constructor(tree: Tree, options: { beforeRebuild(): Promise<void> | void, interval: number }) {
     super(tree, options);
     this.beforeRebuild = options.beforeRebuild || noop;
   }
 
-  detectChanges() {
+  /**
+   * Patch the detectChanges to hide changes until beforeRebuild resolves
+   */
+  public detectChanges() {
     let changedDirs = super.detectChanges();
     if (changedDirs.length > 0) {
       if (!this.readyForRebuild) {
@@ -54,8 +65,5 @@ export default class PausingWatcher extends Watcher {
     }
     return [];
   }
-
-  emit: (e: string) => void;
-  on: (e: string, cb: (...args: any[]) => void) => void;
 
 }

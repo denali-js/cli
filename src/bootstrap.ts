@@ -24,9 +24,6 @@ const debug = createDebug('denali-cli:bootstrap');
  * supplied by addons. It then gives each command a chance to define any command line arguments and
  * options, and then kicks off yargs. Each command should have defined itself and the appropriate
  * way to invoke itself (by default, the _run method).
- *
- * @export
- * @param {boolean} isLocal
  */
 export default function run(isLocal: boolean)  {
   debug('discovering commands from addons');
@@ -46,7 +43,7 @@ export default function run(isLocal: boolean)  {
       debug('found core denali commands');
       coreCommands = addonCommands;
     } else {
-      debug(`found ${ keys(addonCommands).length } commands from ${ addon.pkg.name }: [ ${ keys(addonCommands).join(', ') } ] `)
+      debug(`found ${ keys(addonCommands).length } commands from ${ addon.pkg.name }: [ ${ keys(addonCommands).join(', ') } ] `);
       commands = Object.assign(commands, addonCommands);
     }
   });
@@ -54,7 +51,7 @@ export default function run(isLocal: boolean)  {
   // Ensure that denali itself is installed so we have the base commands
   if (!coreCommands) {
     ui.error('Whoops, looks like you have not installed denali itself yet.');
-    ui.error('You need to install denali globally (`$ npm i -g denali`) alongside the CLI.')
+    ui.error('You need to install denali globally (`$ npm i -g denali`) alongside the CLI.');
   }
 
   // Core commands take precedence
@@ -90,6 +87,10 @@ export default function run(isLocal: boolean)  {
   .parse(process.argv);
 }
 
+/**
+ * Discover the commands that are available in the supplied directory. For any commands whose names
+ * collide with previously loaded commands, namespace the older command under it's addon name.
+ */
 function discoverCommands(commandsSoFar: { [commandName: string]: typeof Command }, addonName: string, dir: string) {
   if (!fs.existsSync(dir)) {
     return {};
@@ -101,6 +102,7 @@ function discoverCommands(commandsSoFar: { [commandName: string]: typeof Command
   }
   // Load the commands
   let Commands: { [key: string]: typeof Command } = requireTree(dir, {
+    // tslint:disable-next-line:completed-docs
     transform(obj: any) { return obj.default || obj; }
   });
   // Give commands a chance to define their own invocation name separate from the filename. Also,

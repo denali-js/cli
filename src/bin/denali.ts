@@ -6,6 +6,8 @@ import * as path from 'path';
 import * as resolve from 'resolve';
 import findup = require('findup-sync');
 
+/* tslint:disable:no-console */
+
 SourceMapSupport.install();
 
 process.title = 'denali';
@@ -19,9 +21,13 @@ if (!satisfies(process.version, '>=6')) {
 
 let pkgPath = findup('package.json');
 
+/**
+ * Load the globally installed version of the CLI and kick it off from there. Commands will be
+ * loaded from the global package namespace.
+ */
 function loadGlobalCli() {
   let pkg = require('../../package.json');
-  console.log('denali-cli ' + pkg.version + ' [global]');
+  console.log(`denali-cli ${ pkg.version } [global]`);
   try {
     require('../bootstrap').default(false);
   } catch (error) {
@@ -50,7 +56,7 @@ if (!pkgPath) {
       let localDenaliCli = resolve.sync('denali-cli', { basedir: pkgDir });
       let localDenaliPkgDir = path.dirname(findup('package.json', { cwd: localDenaliCli }));
       let localDenaliCliPkg = require(path.join(localDenaliPkgDir, 'package.json'));
-      console.log('denali-cli ' + localDenaliCliPkg.version + ' [local]');
+      console.log(`denali-cli ${ localDenaliCliPkg.version } [local]`);
       try {
         require(path.join(localDenaliPkgDir, 'dist', 'bootstrap')).default(true);
       } catch (error) {

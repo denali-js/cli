@@ -29,7 +29,8 @@
   },
   "scripts": {
     "build": "tsc && mv dist/bin/denali.js dist/bin/denali && chmod +x dist/bin/denali && echo 'Build successful'",
-    "prepublish": "in-publish && npm run build || not-in-publish"
+    "prepublish": "in-publish && npm run build || not-in-publish",
+    "lint": "tslint --project tsconfig.json -c tslint.json --type-check | sed \"s|$PWD/||\""
   },
   "license": "MIT",
   "dependencies": {
