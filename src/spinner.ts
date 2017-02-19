@@ -1,51 +1,81 @@
 import { fork, ChildProcess } from 'child_process';
+import { fromNode, delay } from 'bluebird';
 import * as path from 'path';
 
 let childSpinner: ChildProcess;
 
+// Each operation issued to the child spinner process gets a UID so we can pair acknowledgements
+// with their issuing operation.
+let uid = 0;
+
 /**
- * Start the spinner process
+ * Start the spinner process. Returns a promise that resolves once the spinner process is up and
+ * ready to recieve commands. Rejects if the process fails to start up within 5s (mostly as a
+ * fail-safe to avoid hanging the program if there's a bug).
  */
-function startChildSpinner() {
-  childSpinner = fork(path.join(__dirname, 'spinner-child.js'));
+async function startChildSpinner() {
+  await new Promise<void>((resolve, reject) => {
+    childSpinner = fork(path.join(__dirname, 'spinner-child.js'));
+    childSpinner.send({ operation: 'hello' });
+    childSpinner.once('message', resolve);
+    setTimeout(() => reject('Spinner process failed to startup on time'), 5000);
+  });
 }
 
 /**
- * Send the operation to the child spinner process. If it's not running, fork a new one.
+ * Send the operation to the child spinner process. If it's not running, fork a new one. Returns a
+ * promise that resolves only once the child spinner process as confirmed the operation ran.
  */
-function run(operation: string, ...args: any[]): void {
-  if (!childSpinner) {
-    startChildSpinner();
+async function run(operation: string, ...args: any[]): Promise<void> {
+  if (!childSpinner || !childSpinner.connected) {
+    await startChildSpinner();
   }
-  childSpinner.send({ operation, args });
+  await new Promise<void>((resolve, reject) => {
+    let id = uid++;
+    childSpinner.send({ operation, args, id });
+    childSpinner.on('message', receiveAck);
+    // Wait to resolve the parent promise until we get an ack from the child process.
+    function receiveAck(data: { finished?: boolean, ackId: number }) {
+      if (data.ackId === id) {
+        childSpinner.removeListener('message', receiveAck);
+        if (data.finished) {
+          // If the child says it's done, then don't resolve till it fully exits.
+          childSpinner.on('close', resolve);
+        } else {
+          resolve();
+        }
+      }
+    }
+    setTimeout(() => reject('Spinner process failed to acknowledge a command on time'), 5000);
+  });
 }
 
 export default {
   /**
    * Start the spinner with the given message
    */
-  start(msg: string): void {
-    run('start', msg);
+  async start(msg: string) {
+    await run('start', msg);
   },
   /**
    * Stop the spinner, replace the spinner graphic with a checkmark, optionally update the message,
    * and turn it green.
    */
-  succeed(msg?: string): void {
-    run('succeed', msg);
+  async succeed(msg?: string) {
+    await run('succeed', msg);
   },
   /**
    * Stop the spinner, replace the spinner graphic with an X, optionally update the message, and
    * turn it red.
    */
-  fail(msg?: string): void {
-    run('fail', msg);
+  async fail(msg?: string) {
+    await run('fail', msg);
   },
   /**
    * Stop the spinner, replace the spinner graphic with the supplied symbol and message with the
    * supplied text.
    */
-  finish(symbol: string, text: string): void {
-    run('finish', symbol, text);
-  }
+  async finish(symbol: string, text: string) {
+    await run('finish', symbol, text);
+  },
 };

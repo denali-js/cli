@@ -1,34 +1,54 @@
 import ora = require('ora');
 
+// tslint:disable:isThisSpinnerProcessFinishedd-docs
+
 process.title = 'denali-spinner';
 
 let spinner = ora('');
+spinner.stream = process.stdout;
 
-// tslint:disable:completed-docs
+let isThisSpinnerProcessFinished = false;
+
 let operations: { [method: string]: (...args: any[]) => void } = {
+
   start(msg: string): void {
     spinner.text = msg;
     spinner.start();
   },
+
   succeed(msg?: string): void {
-    spinner.text = msg || spinner.text;
-    spinner.succeed();
-    process.removeAllListeners('message');
+    spinner.succeed(msg);
+    finish();
   },
+
   fail(msg?: string): void {
-    spinner.text = msg || spinner.text;
-    (<any>spinner).stream = process.stderr;
-    spinner.fail();
-    process.removeAllListeners('message');
-    (<any>spinner).stream = process.stdout;
+    spinner.stream = process.stderr;
+    spinner.fail(msg);
+    finish();
   },
+
   finish(symbol: string, text: string): void {
-    (<(options: Object) => void>spinner.stopAndPersist)({ symbol, text });
-    process.removeAllListeners('message');
+    spinner.stopAndPersist({ symbol, text });
+    finish();
   }
+
 };
-// tslint:enable:completed-docs
+
+// Clean up event listeners so the process can exit gracefully, and mark this process as finished.
+function finish() {
+  process.removeAllListeners('message');
+  isThisSpinnerProcessFinished = true;
+}
 
 process.on('message', (data: any) => {
+  // Initial wakeup handshake, so the parent can block on the initial process spinup
+  if (data.operation === 'hello') {
+    process.send('world');
+    return;
+  }
+  // Perform the request operation
   operations[data.operation](...data.args);
+  // Send an acknowledgement that the operation was performed, and whether or not this spinner
+  // process is finished (if so, the parent can block on waiting for this process to fully exit)
+  process.send({ ackId: data.id, finished: isThisSpinnerProcessFinished });
 });
