@@ -184,16 +184,16 @@ export default class Project {
   public async build(outputDir: string = 'dist'): Promise<string> {
     debug('building project');
     let { broccoliBuilder } = this.getBuilderAndTree();
-    spinner.start(`Building ${ this.pkg.name }`);
+    await spinner.start(`Building ${ this.pkg.name }`);
     let timer = startTimer();
     try {
       let results = await broccoliBuilder.build();
       debug('broccoli build finished');
       this.finishBuild(results, outputDir);
       debug('build finalized');
-      spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
+      await spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
     } catch (err) {
-      spinner.fail('Build failed');
+      await spinner.fail('Build failed');
       if (err.file) {
         ui.error(`File: ${ err.file }`);
       }

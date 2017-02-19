@@ -46,7 +46,7 @@ async function run(operation: string, ...args: any[]): Promise<void> {
         }
       }
     }
-    setTimeout(() => reject('Spinner process failed to acknowledge a command on time'), 5000);
+    setTimeout(() => reject(new Error(`Spinner process failed to acknowledge a command on time: ${ operation }(${ args.join(', ') })`)), 5000);
   });
 }
 
