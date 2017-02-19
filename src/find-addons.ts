@@ -6,6 +6,9 @@ import findPlugins, { PluginSummary } from 'find-plugins';
 import { execSync } from 'child_process';
 import { sync as commandExists } from 'command-exists';
 import * as YarnConstants from 'yarn/lib/constants';
+import * as createDebug from 'debug';
+
+const debug = createDebug('denali-cli:find-addons');
 
 
 /**
@@ -25,11 +28,14 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
   };
 
   if (isLocal) {
+    debug(`searching for addons locally in ${ process.cwd() }`);
     return findPlugins(findOptions);
   }
 
+  let npmRoot = execSync('npm root -g').toString().trim();
+  debug(`searching for addons globally in npm root: ${ npmRoot }`);
   let addons = findPlugins(merge({
-    dir: execSync('npm root -g').toString().trim(),
+    dir: npmRoot,
     scanAllDirs: true
   }, findOptions));
 
@@ -40,12 +46,16 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
   // development of global addons (like denali itself)
   // TODO shell out to `yarn root` once yarnpkg/yarn#2388 is fixed
   if (commandExists('yarn')) {
+    let yarnGlobalInstalls = path.join(YarnConstants.GLOBAL_MODULE_DIRECTORY, 'node_modules');
+    debug(`searching for addons globally in yarn global installs: ${ yarnGlobalInstalls }`);
     let globalInstalledYarnAddons = addons.concat(findPlugins(merge({
-      dir: path.join(YarnConstants.GLOBAL_MODULE_DIRECTORY, 'node_modules'),
+      dir: yarnGlobalInstalls,
       scanAllDirs: true
     }, findOptions)));
+    let yarnGlobalLinks = YarnConstants.LINK_REGISTRY_DIRECTORY;
+    debug(`searching for addons globally in yarn global links: ${ yarnGlobalLinks }`);
     let globalLinkedYarnAddons = addons.concat(findPlugins(merge({
-      dir: YarnConstants.LINK_REGISTRY_DIRECTORY,
+      dir: yarnGlobalLinks,
       scanAllDirs: true
     }, findOptions)));
     addons = addons.concat(globalInstalledYarnAddons, globalLinkedYarnAddons);
