@@ -6,6 +6,7 @@ declare module "walk-sync";
 declare module "require-tree";
 declare module "dedent-js";
 declare module "nsp";
+declare module "ora";
 declare module "broccoli";
 declare module "broccoli-slow-trees";
 declare module "broccoli-plugin";
