@@ -19,17 +19,27 @@ import * as tryRequire from 'try-require';
 
 const debug = createDebug('denali-cli:bootstrap');
 
+process.on('unhandledRejection', (reason: any, promise: any) => {
+  ui.warn('A promise was rejected but did not have a .catch() handler:');
+  ui.warn(reason && reason.stack || reason || promise);
+  throw reason;
+});
+
 /**
  * Kicks off the Denali CLI. Discovers any addons in this project, and builds a list of all commands
  * supplied by addons. It then gives each command a chance to define any command line arguments and
  * options, and then kicks off yargs. Each command should have defined itself and the appropriate
  * way to invoke itself (by default, the _run method).
  */
-export default function run(isLocal: boolean)  {
+export default function run(options: { isLocal: boolean, pkg?: any })  {
   debug('discovering commands from addons');
   let commands: { [key: string]: typeof Command } = {};
   let coreCommands: { [key: string]: typeof Command };
-  let addons = findAddons(isLocal);
+  // Special case Denali itself - we want to treat the Denali source like a local project, but it
+  // won't have a dependency on Denali, so it won't be able to load core commands like build and
+  // test from a local copy of Denali.  So to get the core commands, we point it to the global
+  // package instead.
+  let addons = findAddons(options.pkg && options.pkg.name === 'denali' ? false : options.isLocal);
 
   argParser.usage(dedent`
     Usage: denali <command> [options]
@@ -60,7 +70,7 @@ export default function run(isLocal: boolean)  {
   forEach(commands, (CommandClass: typeof Command, name: string): void => {
     try {
       debug(`configuring ${ CommandClass.commandName } command (invocation: "${ name }")`);
-      CommandClass.configure(argParser, { name, isLocal });
+      CommandClass.configure(argParser, { name, isLocal: options.isLocal });
     } catch (error) {
       ui.warn(`${ name } command failed to configure itself:`);
       ui.warn(error.stack);
@@ -72,7 +82,7 @@ export default function run(isLocal: boolean)  {
   .help()
   .version(() => {
     let versions = [];
-    if (isLocal) {
+    if (options.isLocal) {
       let cli = tryRequire(path.join(process.cwd(), 'node_modules', 'denali-cli', 'package.json'));
       versions.push(`denali-cli ${ cli.version } [local]`);
       let denali = tryRequire(path.join(process.cwd(), 'node_modules', 'denali', 'package.json'));
@@ -84,7 +94,7 @@ export default function run(isLocal: boolean)  {
     );
     return versions.join(`\n`);
   })
-  .parse(process.argv);
+  .parse(process.argv.slice(2));
 }
 
 /**
