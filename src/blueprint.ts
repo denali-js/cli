@@ -51,26 +51,42 @@ const debug = createDebug('denali-cli:blueprint');
 export default class Blueprint extends Command {
 
   /**
-   * Find all available blueprints, and configure the argParser to parse them as commands.
+   * Convenience method for calling `.findBlueprints()` and then `.configureBlueprints()`
    */
-  public static findBlueprints(yargs: yargs.Argv, context: { isLocal: boolean, name: string, action?: 'generate' | 'destroy' }) {
-    // Find all blueprints
+  public static findAndConfigureBlueprints(yargs: yargs.Argv, context: { isLocal: boolean, name: string, action?: 'generate' | 'destroy' }) {
+    let blueprints = this.findBlueprints(context.isLocal);
+    return this.configureBlueprints(blueprints, yargs, context);
+  }
+
+  /**
+   * Find all available blueprints
+   */
+  public static findBlueprints(isLocal: boolean) {
     let blueprints: { [name: string]: typeof Blueprint } = {};
-    let addons = findAddons(context.isLocal);
+    let addons = findAddons(isLocal);
     debug('discovering available blueprints');
     addons.forEach((addon) => {
       this.discoverBlueprintsForAddon(blueprints, addon.pkg.name, path.join(addon.dir, 'blueprints'));
     });
+    return blueprints;
+  }
+
+  /**
+   * Given a set of blueprints and a yargs instance, given each blueprint the chance to add a
+   * command to the yargs instance for itself
+   */
+  public static configureBlueprints(blueprints: { [name: string]: typeof Blueprint }, yargs: yargs.Argv, context: { isLocal: boolean, name: string, action?: 'generate' | 'destroy' }) {
     // Configure a yargs instance with a command for each one
     forEach(blueprints, (BlueprintClass: typeof Blueprint, name: string): void => {
       try {
         debug(`configuring ${ BlueprintClass.blueprintName } blueprint (invocation: "${ name }")`);
-        BlueprintClass.configure(yargs, merge({}, context, { name }));
+        yargs = BlueprintClass.configure(yargs, merge({}, context, { name }));
       } catch (error) {
         ui.warn(`${ name } blueprint failed to configure itself:`);
         ui.warn(error.stack);
       }
     });
+    return yargs;
   }
 
   /**
