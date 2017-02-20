@@ -195,8 +195,12 @@ export default class Blueprint extends Command {
       ui.info(`${ chalk.green('create') } ${ destRelativepath }`);
     });
 
-
-    await this.postInstall(argv);
+    try {
+      await this.postInstall(argv);
+    } catch (e) {
+      ui.error('postInstall failed:');
+      ui.error(e.stack || e);
+    }
   }
 
   /**
