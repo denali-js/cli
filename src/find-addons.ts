@@ -2,11 +2,13 @@ import {
   merge
 } from 'lodash';
 import * as path from 'path';
+import * as fs from 'fs';
 import findPlugins, { PluginSummary } from 'find-plugins';
 import { execSync } from 'child_process';
 import { sync as commandExists } from 'command-exists';
 import * as YarnConstants from 'yarn/lib/constants';
 import * as createDebug from 'debug';
+import ui from './ui';
 
 const debug = createDebug('denali-cli:find-addons');
 
@@ -49,17 +51,24 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
   if (commandExists('yarn')) {
     let yarnGlobalInstalls = path.join(YarnConstants.GLOBAL_MODULE_DIRECTORY, 'node_modules');
     debug(`searching for addons globally in yarn global installs: ${ yarnGlobalInstalls }`);
-    let globalInstalledYarnAddons = addons.concat(findPlugins(merge({
-      dir: yarnGlobalInstalls,
-      scanAllDirs: true
-    }, findOptions)));
+    if (fs.existsSync(yarnGlobalInstalls)) {
+      addons = addons.concat(findPlugins(merge({
+        dir: yarnGlobalInstalls,
+        scanAllDirs: true
+      }, findOptions)));
+    } else {
+      ui.warn(`Tried to load globally installed addons from yarn, but ${ yarnGlobalInstalls } doesn't exist, skipping ...`);
+    }
     let yarnGlobalLinks = YarnConstants.LINK_REGISTRY_DIRECTORY;
     debug(`searching for addons globally in yarn global links: ${ yarnGlobalLinks }`);
-    let globalLinkedYarnAddons = addons.concat(findPlugins(merge({
-      dir: yarnGlobalLinks,
-      scanAllDirs: true
-    }, findOptions)));
-    addons = addons.concat(globalInstalledYarnAddons, globalLinkedYarnAddons);
+    if (fs.existsSync(yarnGlobalLinks)) {
+      addons = addons.concat(findPlugins(merge({
+        dir: yarnGlobalLinks,
+        scanAllDirs: true
+      }, findOptions)));
+    } else {
+      ui.warn(`Tried to load globally linked addons from yarn, but ${ yarnGlobalLinks } doesn't exist, skipping ...`);
+    }
   }
 
   return addons;
