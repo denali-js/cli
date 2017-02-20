@@ -24,7 +24,8 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
   let findOptions = {
     sort: true,
     configName: 'denali',
-    keyword: 'denali-addon'
+    keyword: 'denali-addon',
+    includeDev: true
   };
 
   if (isLocal) {

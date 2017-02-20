@@ -142,6 +142,7 @@ export default class Builder {
       dir: this.dir,
       keyword: 'denali-addon',
       sort: true,
+      includeDev: true,
       configName: 'denali',
       include: preseededAddons
     });
