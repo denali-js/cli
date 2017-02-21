@@ -52,7 +52,7 @@ export default {
   warn(...msgs: any[]) {
     if (loglevels.indexOf(this.loglevel) <= loglevels.indexOf('warn')) {
       msgs = msgs.map((msg) => chalk.yellow(msg));
-      console.warn(msgs.shift(), ...msgs);
+      console.log(msgs.shift(), ...msgs);
     }
   },
   /**
@@ -70,7 +70,7 @@ export default {
   success(...msgs: any[]) {
     if (loglevels.indexOf(this.loglevel) <= loglevels.indexOf('success')) {
       msgs = msgs.map((msg) => chalk.green(msg));
-      console.error(msgs.shift(), ...msgs);
+      console.log(msgs.shift(), ...msgs);
     }
   }
 };
