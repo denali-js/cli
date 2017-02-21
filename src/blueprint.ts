@@ -177,7 +177,7 @@ export default class Blueprint extends Command {
       }
 
       let filenameTemplate = template(relativepath, {
-        interpolate: /__([\S]+)__/g,
+        interpolate: /__(.+?)__/g,
         sourceURL: relativepath
       });
       let destRelativepath = filenameTemplate(data);
