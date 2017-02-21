@@ -31,7 +31,7 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
  * options, and then kicks off yargs. Each command should have defined itself and the appropriate
  * way to invoke itself (by default, the _run method).
  */
-export default function run(options: { isLocal: boolean, pkg?: any })  {
+export default function run(projectPkg?: any)  {
   debug('discovering commands from addons');
   let commands: { [key: string]: typeof Command } = {};
   let coreCommands: { [key: string]: typeof Command };
@@ -39,7 +39,7 @@ export default function run(options: { isLocal: boolean, pkg?: any })  {
   // won't have a dependency on Denali, so it won't be able to load core commands like build and
   // test from a local copy of Denali.  So to get the core commands, we point it to the global
   // package instead.
-  let addons = findAddons(options.pkg && options.pkg.name === 'denali' ? false : options.isLocal);
+  let addons = findAddons(projectPkg && projectPkg.name !== 'denali');
 
   argParser.usage(dedent`
     Usage: denali <command> [options]
@@ -70,7 +70,7 @@ export default function run(options: { isLocal: boolean, pkg?: any })  {
   forEach(commands, (CommandClass: typeof Command, name: string): void => {
     try {
       debug(`configuring ${ CommandClass.commandName } command (invocation: "${ name }")`);
-      CommandClass.configure(argParser, { name, isLocal: options.isLocal });
+      CommandClass.configure(name, argParser, projectPkg);
     } catch (error) {
       ui.warn(`${ name } command failed to configure itself:`);
       ui.warn(error.stack);
@@ -82,7 +82,7 @@ export default function run(options: { isLocal: boolean, pkg?: any })  {
   .help()
   .version(() => {
     let versions = [];
-    if (options.isLocal) {
+    if (projectPkg) {
       let cli = tryRequire(path.join(process.cwd(), 'node_modules', 'denali-cli', 'package.json'));
       versions.push(`denali-cli ${ cli.version } [local]`);
       let denali = tryRequire(path.join(process.cwd(), 'node_modules', 'denali', 'package.json'));
@@ -94,7 +94,7 @@ export default function run(options: { isLocal: boolean, pkg?: any })  {
     );
     return versions.join(`\n`);
   })
-  .parse(process.argv.slice(2));
+  .parse(process.argv.slice(2), { projectPkg });
 }
 
 /**

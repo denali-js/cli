@@ -53,18 +53,19 @@ export default class Blueprint extends Command {
   /**
    * Convenience method for calling `.findBlueprints()` and then `.configureBlueprints()`
    */
-  public static findAndConfigureBlueprints(yargs: yargs.Argv, context: { isLocal: boolean, name: string, action?: 'generate' | 'destroy' }) {
-    let blueprints = this.findBlueprints(context.isLocal);
-    return this.configureBlueprints(blueprints, yargs, context);
+  public static findAndConfigureBlueprints(yargs: yargs.Argv, action: 'generate' | 'destroy', projectPkg: any) {
+    let blueprints = this.findBlueprints(projectPkg);
+    return this.configureBlueprints(blueprints, yargs, action, projectPkg);
   }
 
   /**
    * Find all available blueprints
    */
-  public static findBlueprints(isLocal: boolean) {
+  public static findBlueprints(projectPkg: any) {
     let blueprints: { [name: string]: typeof Blueprint } = {};
-    let addons = findAddons(isLocal);
-    debug('discovering available blueprints');
+    // Special case denali itself, so it can access it's globally linked blueprints.
+    let addons = findAddons(projectPkg && projectPkg.name !== 'denali');
+    debug(`discovering available blueprints from [ ${ addons.map((a) => a.pkg.name).join(', ') } ] addons`);
     addons.forEach((addon) => {
       this.discoverBlueprintsForAddon(blueprints, addon.pkg.name, path.join(addon.dir, 'blueprints'));
     });
@@ -75,12 +76,12 @@ export default class Blueprint extends Command {
    * Given a set of blueprints and a yargs instance, given each blueprint the chance to add a
    * command to the yargs instance for itself
    */
-  public static configureBlueprints(blueprints: { [name: string]: typeof Blueprint }, yargs: yargs.Argv, context: { isLocal: boolean, name: string, action?: 'generate' | 'destroy' }) {
+  public static configureBlueprints(blueprints: { [name: string]: typeof Blueprint }, yargs: yargs.Argv, action: 'generate' | 'destroy', projectPkg: any) {
     // Configure a yargs instance with a command for each one
     forEach(blueprints, (BlueprintClass: typeof Blueprint, name: string): void => {
       try {
         debug(`configuring ${ BlueprintClass.blueprintName } blueprint (invocation: "${ name }")`);
-        yargs = BlueprintClass.configure(yargs, merge({}, context, { name }));
+        yargs = BlueprintClass.configure(name, yargs, projectPkg, action);
       } catch (error) {
         ui.warn(`${ name } blueprint failed to configure itself:`);
         ui.warn(error.stack);
@@ -93,7 +94,9 @@ export default class Blueprint extends Command {
    * Given an addon's name and source directory, load all the blueprints that addon may supply
    */
   public static discoverBlueprintsForAddon(blueprintsSoFar: { [blueprintName: string]: typeof Blueprint }, addonName: string, dir: string) {
+    debug(`looking for blueprints in ${ dir }`);
     if (!fs.existsSync(dir)) {
+      debug(`${ dir } does not exist, skipping ...`);
       return {};
     }
     // Load the blueprints
@@ -126,8 +129,8 @@ export default class Blueprint extends Command {
   /**
    * Customize the subcommands header to indicate that it's a list of blueprints
    */
-  public static configure(yargs: yargs.Argv, context: { name: string, isLocal: boolean }): yargs.Argv {
-    return super.configure(yargs, context)
+  public static configure(blueprintName: string, yargs: yargs.Argv, projectPkg: any, action: 'generate' | 'destroy'): yargs.Argv {
+    return super.configure(blueprintName, yargs, projectPkg, { action })
       .updateStrings({
         'Commands:': 'Available Blueprints:'
       });
@@ -152,7 +155,7 @@ export default class Blueprint extends Command {
    * Immediately delegates to either generate or destroy
    */
   public async run(argv: any) {
-    if (this.action === 'generate') {
+    if (argv.action === 'generate') {
       await  this.generate(argv);
     } else {
       await this.destroy(argv);
@@ -195,11 +198,13 @@ export default class Blueprint extends Command {
       ui.info(`${ chalk.green('create') } ${ destRelativepath }`);
     });
 
-    try {
-      await this.postInstall(argv);
-    } catch (e) {
-      ui.error('postInstall failed:');
-      ui.error(e.stack || e);
+    if (!argv.skipPostInstall) {
+      try {
+        await this.postInstall(argv);
+      } catch (e) {
+        ui.error('postInstall failed:');
+        ui.error(e.stack || e);
+      }
     }
   }
 
@@ -256,14 +261,22 @@ export default class Blueprint extends Command {
     filesToDelete.forEach((file) => {
       rimraf.sync(file);
     });
-    await this.postUninstall(argv);
+
+    if (!argv.skipPostUninstall) {
+      try {
+        await this.postUninstall(argv);
+      } catch (e) {
+        ui.error('postInstall failed:');
+        ui.error(e.stack || e);
+      }
+    }
   }
 
   /**
    * A hook to generate data to be interpolated into the blueprint's template files.
    */
   public locals(argv: any): any {
-    return {};
+    return argv;
   }
 
   /**

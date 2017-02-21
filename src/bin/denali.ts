@@ -29,7 +29,7 @@ function loadGlobalCli() {
   let pkg = require('../../package.json');
   console.log(`denali-cli ${ pkg.version } [global]`);
   try {
-    require('../bootstrap').default({ isLocal: false });
+    require('../bootstrap').default();
   } catch (error) {
     console.error('Error encountered while starting up denali-cli:');
     console.error(error.stack);
@@ -51,7 +51,8 @@ if (!pkgPath) {
     let localDenaliCliPkg = require(path.join(localDenaliPkgDir, 'package.json'));
     console.log(`denali-cli ${ localDenaliCliPkg.version } [local]`);
     try {
-      require(path.join(localDenaliPkgDir, 'dist', 'bootstrap')).default({ isLocal: true, pkg });
+      process.chdir(pkgDir);
+      require(path.join(localDenaliPkgDir, 'dist', 'bootstrap')).default(pkg);
     } catch (error) {
       console.error('Error encountered while starting up denali-cli:');
       console.error(error.stack);

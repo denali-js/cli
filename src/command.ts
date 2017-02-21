@@ -25,8 +25,8 @@ abstract class Command {
   /**
    * Accepts the global yargs object, gives the command a chance to define it's interface.
    */
-  public static configure(yargs: Yargs, context: { name: string, isLocal: boolean }): Yargs {
-    let command = context.name;
+  public static configure(commandName: string, yargs: Yargs, projectPkg: any, context?: any): Yargs {
+    let command = commandName;
     if (this.params) {
       command += ` ${ this.params }`;
     }
@@ -36,16 +36,16 @@ abstract class Command {
       aliases: this.aliases,
       describe: this.description,
       builder: (commandArgs: Yargs) => {
-        debug(`building options for ${context.name}`);
-        commandArgs = this.configureOptions(commandArgs, context);
+        debug(`building options for ${ commandName }`);
+        commandArgs = this.configureOptions(commandName, commandArgs, projectPkg);
         if (this.configureSubcommands) {
-          commandArgs = this.configureSubcommands(yargs, context);
+          commandArgs = this.configureSubcommands(commandName, commandArgs, projectPkg);
         }
         return commandArgs;
       },
       handler: (args) => {
         // tslint:disable-next-line:no-floating-promises
-        this._run(context, args);
+        this._run(assign(args, context));
       }
     });
   }
@@ -53,7 +53,7 @@ abstract class Command {
   /**
    * Takes the yargs object for this command, gives the command a chance to define any options
    */
-  protected static configureOptions(yargs: Yargs, context: { name: string, isLocal: boolean }) {
+  protected static configureOptions(commandName: string, yargs: Yargs, projectPkg: any) {
     yargs.usage(this.longDescription);
     forEach(this.flags, (options, flagName) => {
       yargs = yargs.option(kebabCase(flagName), options);
@@ -64,7 +64,7 @@ abstract class Command {
   /**
    * Takes the yargs object for this command, gives the command a chance to define any subcommands
    */
-  protected static configureSubcommands: (yargs: Yargs, context: { name: string, isLocal: boolean }) => Yargs;
+  protected static configureSubcommands: (commandName: string, yargs: Yargs, projectPkg: any) => Yargs;
 
   /**
    * The name of the addon that supplied this command. Set by the boostrapping script as it loads
@@ -116,22 +116,17 @@ abstract class Command {
    * @param context additional context provided statically, passed through to the command
    *                constructor; useful for blueprints to pass additional, static data
    */
-  public static async _run(context: any, argv: any): Promise<void> {
+  public static async _run(argv: any): Promise<void> {
     debug(`enforcing runsInApp setting (${ this.runsInApp })`);
-    if (context.isLocal) {
-      let projectRoot = path.resolve(path.dirname(findup('package.json')));
-      debug(`command is inside denali project, chdir'ing to root project directory ${ projectRoot }`);
-      process.chdir(projectRoot);
-    }
-    if (context.isLocal && this.runsInApp === false) {
+    if (argv.projectPkg && this.runsInApp === false) {
       ui.error('This command can only be run outside an existing Denali project.');
       return;
     }
-    if (!context.isLocal && this.runsInApp === true) {
+    if (!argv.projectPkg && this.runsInApp === true) {
       ui.error('This command can only be run inside an existing Denali project.');
       return;
     }
-    let command: Command = new (<any>this)(context);
+    let command: Command = new (<any>this)();
     debug('running command');
     try {
       await command.run(argv);
@@ -139,19 +134,6 @@ abstract class Command {
       ui.error(`Error encountered when running "${ this.commandName }" command`);
       ui.error(e.stack);
     }
-  }
-
-  /**
-   * Is the command being run inside a denali project?
-   */
-  public isLocal: boolean;
-
-  /**
-   * Creates an instance of Command, assigning any properties on the supplied context object to the
-   * new instance directly.
-   */
-  constructor(context: any) {
-    assign(this, context);
   }
 
   /**
