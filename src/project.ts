@@ -208,13 +208,13 @@ export default class Project {
   /**
    * Build the project and start watching the source files for changes, rebuilding when they occur
    */
-  public watch(options: WatchOptions): void {
+  public async watch(options: WatchOptions) {
     options.outputDir = options.outputDir || 'dist';
     options.onBuild = options.onBuild || noop;
     // Start watcher
     let timer = startTimer();
     let { broccoliBuilder, builder } = this.getBuilderAndTree();
-    spinner.start(`Building ${ this.pkg.name }`);
+    await spinner.start(`Building ${ this.pkg.name }`);
     let watcher = new Watcher(broccoliBuilder, { beforeRebuild: options.beforeRebuild, interval: 100 });
 
     // Watch/build any child addons under development
@@ -238,19 +238,19 @@ export default class Project {
     });
 
     // Handle watcher events
-    watcher.on('buildstart', () => {
+    watcher.on('buildstart', async () => {
       debug('changes detected, rebuilding');
-      spinner.start(`Building ${ this.pkg.name }`);
+      await spinner.start(`Building ${ this.pkg.name }`);
       timer = startTimer();
     });
-    watcher.on('change', (results: { directory: string, graph: any }) => {
+    watcher.on('change', async (results: { directory: string, graph: any }) => {
       debug('rebuild finished, wrapping up');
       this.finishBuild(results, options.outputDir);
-      spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
+      await spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
       options.onBuild(this);
     });
-    watcher.on('error', (error: any) => {
-      spinner.fail('Build failed');
+    watcher.on('error', async (error: any) => {
+      await spinner.fail('Build failed');
       if (error.file) {
         if (error.line && error.column) {
           ui.error(`File: ${ error.treeDir }/${ error.file }:${ error.line }:${ error.column }`);
