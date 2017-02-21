@@ -27,7 +27,7 @@ let pkgPath = findup('package.json');
  */
 function loadGlobalCli() {
   let pkg = require('../../package.json');
-  console.log(`denali-cli ${ pkg.version } [global]`);
+  console.log(`denali-cli v${ pkg.version } [global]`);
   try {
     require('../bootstrap').default();
   } catch (error) {
@@ -49,7 +49,7 @@ if (!pkgPath) {
     let localDenaliCli = resolve.sync('denali-cli', { basedir: pkgDir });
     let localDenaliPkgDir = path.dirname(findup('package.json', { cwd: localDenaliCli }));
     let localDenaliCliPkg = require(path.join(localDenaliPkgDir, 'package.json'));
-    console.log(`denali-cli ${ localDenaliCliPkg.version } [local]`);
+    console.log(`denali-cli v${ localDenaliCliPkg.version } [local]`);
     try {
       process.chdir(pkgDir);
       require(path.join(localDenaliPkgDir, 'dist', 'bootstrap')).default(pkg);

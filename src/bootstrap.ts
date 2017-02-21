@@ -50,6 +50,7 @@ export default function run(projectPkg?: any)  {
   addons.forEach((addon) => {
     let addonCommands = discoverCommands(commands, addon.pkg.name, path.join(addon.dir, 'commands'));
     if (addon.pkg.name === 'denali') {
+      ui.info(`denali v${ addon.pkg.version } [${ projectPkg && projectPkg.name !== 'denali' ? 'local' : 'global' }]\n`);
       debug('found core denali commands');
       coreCommands = addonCommands;
     } else {
@@ -82,12 +83,6 @@ export default function run(projectPkg?: any)  {
   .help()
   .version(() => {
     let versions = [];
-    if (projectPkg) {
-      let cli = tryRequire(path.join(process.cwd(), 'node_modules', 'denali-cli', 'package.json'));
-      versions.push(`denali-cli ${ cli.version } [local]`);
-      let denali = tryRequire(path.join(process.cwd(), 'node_modules', 'denali', 'package.json'));
-      versions.push(`denali ${ denali.version } [local]`);
-    }
     versions.push(
       `node ${ process.versions.node }`,
       `openssl ${ process.versions.openssl }`
