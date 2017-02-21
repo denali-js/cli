@@ -57,7 +57,7 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
         scanAllDirs: true
       }, findOptions)));
     } else {
-      ui.warn(`Tried to load globally installed addons from yarn, but ${ yarnGlobalInstalls } doesn't exist, skipping ...`);
+      debug(`Tried to load globally installed addons from yarn, but ${ yarnGlobalInstalls } doesn't exist, skipping ...`);
     }
     let yarnGlobalLinks = YarnConstants.LINK_REGISTRY_DIRECTORY;
     debug(`searching for addons globally in yarn global links: ${ yarnGlobalLinks }`);
@@ -67,7 +67,7 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
         scanAllDirs: true
       }, findOptions)));
     } else {
-      ui.warn(`Tried to load globally linked addons from yarn, but ${ yarnGlobalLinks } doesn't exist, skipping ...`);
+      debug(`Tried to load globally linked addons from yarn, but ${ yarnGlobalLinks } doesn't exist, skipping ...`);
     }
   }
 
