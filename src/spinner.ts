@@ -15,10 +15,13 @@ let uid = 0;
  */
 async function startChildSpinner() {
   await new Promise<void>((resolve, reject) => {
+    let fallback = setTimeout(() => reject('Spinner process failed to startup on time'), 4000);
     childSpinner = fork(path.join(__dirname, 'spinner-child.js'));
     childSpinner.send({ operation: 'hello' });
-    childSpinner.once('message', resolve);
-    setTimeout(() => reject('Spinner process failed to startup on time'), 5000);
+    childSpinner.once('message', () => {
+      clearTimeout(fallback);
+      resolve();
+    });
   });
 }
 
@@ -31,22 +34,28 @@ async function run(operation: string, ...args: any[]): Promise<void> {
     await startChildSpinner();
   }
   await new Promise<void>((resolve, reject) => {
+    let fallback = setTimeout(() => {
+      reject(new Error(`Spinner process failed to acknowledge a command on time: ${ operation }(${ args.join(', ') })`))
+    }, 4000);
     let id = uid++;
     childSpinner.send({ operation, args, id });
     childSpinner.on('message', receiveAck);
     // Wait to resolve the parent promise until we get an ack from the child process.
     function receiveAck(data: { finished?: boolean, ackId: number }) {
       if (data.ackId === id) {
+        clearTimeout(fallback);
         childSpinner.removeListener('message', receiveAck);
         if (data.finished) {
           // If the child says it's done, then don't resolve till it fully exits.
-          childSpinner.on('close', resolve);
+          childSpinner.on('close', () => {
+            resolve();
+          });
         } else {
+          clearTimeout(fallback);
           resolve();
         }
       }
     }
-    setTimeout(() => reject(new Error(`Spinner process failed to acknowledge a command on time: ${ operation }(${ args.join(', ') })`)), 5000);
   });
 }
 
