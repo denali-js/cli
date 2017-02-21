@@ -11,7 +11,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as chalk from 'chalk';
 import * as walk from 'walk-sync';
-import codeshift from 'jscodeshift';
+import * as codeshift from 'jscodeshift';
 import * as mkdirp from 'mkdirp';
 import * as rimraf from 'rimraf';
 import * as yargs from 'yargs';
