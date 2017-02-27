@@ -145,6 +145,14 @@ export default class Blueprint extends Command {
    * The source directory for this blueprints
    */
   public static dir: string;
+  
+  /**
+   * Files that should be renamed in all blueprints
+   * Can be overriden/extended by individual addons
+   */
+  public static renamedFiles: any = {
+      gitignore: '.gitignore'
+  };
 
   /**
    * Should we generate or destroy this blueprint?
@@ -169,6 +177,7 @@ export default class Blueprint extends Command {
   public async generate(argv: any): Promise<void> {
     let data = this.locals(argv);
     let dest = process.cwd();
+    let renamedFiles = (<typeof Blueprint>this.constructor).renamedFiles;
 
     walk(this.templateFiles).forEach((relativepath: string): void => {
       let absolutepath = path.resolve(path.join(this.templateFiles, relativepath));
@@ -182,6 +191,11 @@ export default class Blueprint extends Command {
       });
       let destRelativepath = filenameTemplate(data);
       let destAbsolutepath = path.join(dest, destRelativepath);
+      let basename = path.basename(destRelativepath);
+      
+      if (renamedFiles[basename]) {
+          destRelativepath = path.join(path.dirname(destRelativepath), renamedFiles[basename]);
+      }
 
       if (fs.existsSync(destAbsolutepath)) {
         ui.info(`${ chalk.green('already exists') } ${ destRelativepath }`);
