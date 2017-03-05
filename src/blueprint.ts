@@ -190,12 +190,13 @@ export default class Blueprint extends Command {
         sourceURL: relativepath
       });
       let destRelativepath = filenameTemplate(data);
-      let destAbsolutepath = path.join(dest, destRelativepath);
       let basename = path.basename(destRelativepath);
       
       if (renamedFiles[basename]) {
           destRelativepath = path.join(path.dirname(destRelativepath), renamedFiles[basename]);
       }
+
+      let destAbsolutepath = path.join(dest, destRelativepath);
 
       if (fs.existsSync(destAbsolutepath)) {
         ui.info(`${ chalk.green('already exists') } ${ destRelativepath }`);
