@@ -282,6 +282,7 @@ export default class Project {
       let outputDir = await this.build();
       let applicationPath = path.resolve(path.join(outputDir, 'app', 'application'));
       let Application = tryRequire(applicationPath);
+      Application = Application.default || Application;
       if (!Application) {
         throw new Error(`Denali was unable to load app/application.js from ${ applicationPath }`);
       }
