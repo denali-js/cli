@@ -40,6 +40,7 @@ export default function run(projectPkg?: any)  {
   // test from a local copy of Denali.  So to get the core commands, we point it to the global
   // package instead.
   let addons = findAddons(projectPkg && projectPkg.name !== 'denali');
+  debug(`found ${ addons.length } addons: ${ addons.map((addon) => addon.pkg.name).join(', ') }`);
 
   argParser.usage(dedent`
     Usage: denali <command> [options]
