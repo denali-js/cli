@@ -145,7 +145,7 @@ export default class Blueprint extends Command {
    * The source directory for this blueprints
    */
   public static dir: string;
-  
+
   /**
    * Files that should be renamed in all blueprints
    * Can be overriden/extended by individual addons
@@ -191,7 +191,7 @@ export default class Blueprint extends Command {
       });
       let destRelativepath = filenameTemplate(data);
       let basename = path.basename(destRelativepath);
-      
+
       if (renamedFiles[basename]) {
           destRelativepath = path.join(path.dirname(destRelativepath), renamedFiles[basename]);
       }
@@ -319,7 +319,13 @@ export default class Blueprint extends Command {
    */
   public addRoute(method: string, urlPattern: string, actionPath?: string, ...args: any[]): void {
     let routesFilepath = path.join(process.cwd(), 'config', 'routes.js');
-    let routesSource = fs.readFileSync(routesFilepath, 'utf-8');
+    let routesSource;
+    try {
+      routesSource = fs.readFileSync(routesFilepath, 'utf-8');
+    } catch (e) {
+      ui.warn(`Attempted to add "${ method.toUpperCase() } ${ urlPattern } -> ${ actionPath }" route, but config/routes.js does not exist. Skipping ...`);
+      return;
+    }
     let j = codeshift;
     let ast = codeshift(routesSource);
     let drawRoutesFunction = ast.find(j.ExportDefaultDeclaration).get().value.declaration;
@@ -360,7 +366,13 @@ export default class Blueprint extends Command {
    */
   public removeRoute(method: string, urlPattern: string, actionPath?: string, ...args: any[]): void {
     let routesFilepath = path.join(process.cwd(), 'config', 'routes.js');
-    let routesSource = fs.readFileSync(routesFilepath, 'utf-8');
+    let routesSource;
+    try {
+      routesSource = fs.readFileSync(routesFilepath, 'utf-8');
+    } catch (e) {
+      ui.warn(`Attempted to remove "${ method.toUpperCase() } ${ urlPattern } -> ${ actionPath }" route, but config/routes.js does not exist. Skipping ...`);
+      return;
+    }
     let j = codeshift;
     let ast = codeshift(routesSource);
     let drawRoutesFunction = ast.find(j.ExportDefaultDeclaration).get().value.declaration;
