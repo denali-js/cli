@@ -93,7 +93,8 @@ export default class Builder {
     'README.md',
     'CHANGELOG.md',
     'LICENSE',
-    'denali-build.js'
+    'denali-build.js',
+    '.env'
   ];
 
   /**
