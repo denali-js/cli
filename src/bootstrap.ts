@@ -16,6 +16,7 @@ import Command from './command';
 import findAddons from './find-addons';
 import * as dedent from 'dedent-js';
 import * as tryRequire from 'try-require';
+import * as dotenv from 'dotenv';
 
 const debug = createDebug('denali-cli:bootstrap');
 
@@ -32,6 +33,7 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
  * way to invoke itself (by default, the _run method).
  */
 export default function run(projectPkg?: any)  {
+  dotenv.config();
   debug('discovering commands from addons');
   let commands: { [key: string]: typeof Command } = {};
   let coreCommands: { [key: string]: typeof Command };
