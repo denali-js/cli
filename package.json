@@ -36,6 +36,7 @@
   "dependencies": {
     "@types/bluebird": "^3.0.37",
     "@types/debug": "^0.0.29",
+    "@types/dotenv": "^2.0.20",
     "@types/findup-sync": "^0.3.29",
     "@types/flat": "^0.0.28",
     "@types/glob": "^5.0.30",
@@ -59,6 +60,7 @@
     "copy-dereference": "^1.0.0",
     "debug": "^2.6.0",
     "dedent-js": "^1.0.1",
+    "dotenv": "^4.0.0",
     "find-plugins": "^1.0.1",
     "findup-sync": "^0.4.0",
     "glob": "^7.0.3",
