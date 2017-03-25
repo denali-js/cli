@@ -237,16 +237,21 @@ export default class Project {
       addonProject.watch({ onBuild: options.onBuild, outputDir: addonDist });
     });
 
+    let spinnerStart: Promise<void>;
+
     // Handle watcher events
     watcher.on('buildstart', async () => {
       debug('changes detected, rebuilding');
-      await spinner.start(`Building ${ this.pkg.name }`);
       timer = startTimer();
+      spinnerStart = spinner.start(`Building ${ this.pkg.name }`);
+      await spinnerStart;
     });
     watcher.on('change', async (results: { directory: string, graph: any }) => {
       debug('rebuild finished, wrapping up');
       this.finishBuild(results, options.outputDir);
+      await spinnerStart;
       await spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
+      spinnerStart = null;
       options.onBuild(this);
     });
     watcher.on('error', async (error: any) => {
