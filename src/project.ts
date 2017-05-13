@@ -10,7 +10,7 @@ import dedent from 'dedent-js';
 import * as nsp from 'nsp';
 import * as broccoli from 'broccoli';
 import * as rimraf from 'rimraf';
-import printSlowNodes from 'broccoli-slow-trees';
+import * as printSlowNodes from 'broccoli-slow-trees';
 import { sync as copyDereferenceSync } from 'copy-dereference';
 import * as chalk from 'chalk';
 import * as MergeTree from 'broccoli-merge-trees';
@@ -22,7 +22,7 @@ import Builder, { Tree } from './builder';
 import Watcher from './watcher';
 import ui from './ui';
 import spinner from './spinner';
-import startTimer from './timer';
+import startTimer, { Timer } from './timer';
 
 const debug = createDebug('denali-cli:project');
 
@@ -141,7 +141,14 @@ export default class Project {
       rootTree = this.buildDummyTree(rootTree);
     }
 
-    let broccoliBuilder = new broccoli.Builder(rootTree);
+    // ensue tmp folder exists, broccoli won't create
+    // it automatically
+    let tmpdir = path.join(this.dir, 'tmp');
+    if (!fs.existsSync(tmpdir)) {
+      fs.mkdirSync(tmpdir);
+    }
+
+    let broccoliBuilder = new broccoli.Builder(rootTree, { tmpdir });
     // tslint:disable-next-line:completed-docs
     function onExit() {
       broccoliBuilder.cleanup();
@@ -187,9 +194,9 @@ export default class Project {
     await spinner.start(`Building ${ this.pkg.name }`);
     let timer = startTimer();
     try {
-      let results = await broccoliBuilder.build();
+      await broccoliBuilder.build();
       debug('broccoli build finished');
-      this.finishBuild(results, outputDir);
+      this.finishBuild(broccoliBuilder, outputDir);
       debug('build finalized');
       await spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
     } catch (err) {
@@ -211,11 +218,8 @@ export default class Project {
   public async watch(options: WatchOptions) {
     options.outputDir = options.outputDir || 'dist';
     options.onBuild = options.onBuild || noop;
-    // Start watcher
-    let timer = startTimer();
     let { broccoliBuilder, builder } = this.getBuilderAndTree();
-    await spinner.start(`Building ${ this.pkg.name }`);
-    let watcher = new Watcher(broccoliBuilder, { beforeRebuild: options.beforeRebuild, interval: 100 });
+    let watcher = new Watcher(broccoliBuilder, { beforeRebuild: options.beforeRebuild, debounce: 100 });
 
     // Watch/build any child addons under development
     let inDevelopmentAddons = builder.childBuilders.filter((childBuilder) => {
@@ -237,19 +241,28 @@ export default class Project {
       addonProject.watch({ onBuild: options.onBuild, outputDir: addonDist });
     });
 
+    let timer: Timer;
+    let spinnerStart: Promise<void>;
+
     // Handle watcher events
-    watcher.on('buildstart', async () => {
-      debug('changes detected, rebuilding');
-      await spinner.start(`Building ${ this.pkg.name }`);
+    watcher.on('buildStart', async () => {
+      debug('build starting');
       timer = startTimer();
+      spinnerStart = spinner.start(`Building ${ this.pkg.name }`);
+      await spinnerStart;
     });
-    watcher.on('change', async (results: { directory: string, graph: any }) => {
-      debug('rebuild finished, wrapping up');
-      this.finishBuild(results, options.outputDir);
+
+    watcher.on('buildSuccess', async () => {
+      debug('build finished, wrapping up');
+      this.finishBuild(broccoliBuilder, options.outputDir);
+      await spinnerStart;
       await spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
+      spinnerStart = null;
       options.onBuild(this);
     });
-    watcher.on('error', async (error: any) => {
+
+    watcher.on('buildFailure', async (error: any) => {
+      await spinnerStart;
       await spinner.fail('Build failed');
       if (error.file) {
         if (error.line && error.column) {
@@ -265,6 +278,8 @@ export default class Project {
         ui.error(`Stack trace:\n${ error.stack.replace(/(^.)/mg, '  $1') }`);
       }
     });
+
+    watcher.start();
   }
 
   /**
@@ -300,17 +315,17 @@ export default class Project {
    * After a build completes, this method cleans up the result. It copies the results out of tmp and
    * into the output directory, and kicks off any optional behaviors post-build.
    */
-  protected finishBuild(results: { directory: string, graph: any }, outputDir: string) {
+  protected finishBuild(builder: any, outputDir: string) {
     // Copy the result out of broccoli tmp
     if (!path.isAbsolute(outputDir)) {
       outputDir = path.join(process.cwd(), outputDir);
     }
     rimraf.sync(outputDir);
-    copyDereferenceSync(results.directory, outputDir);
+    copyDereferenceSync(builder.outputPath, outputDir);
 
     // Print slow build trees
     if (this.printSlowTrees) {
-      printSlowNodes(results.graph);
+      printSlowNodes(builder.outputNodeWrapper);
     }
 
     // Run an nsp audit on the package
