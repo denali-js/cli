@@ -9,6 +9,9 @@ import {
 } from 'lodash';
 import * as path from 'path';
 import * as fs from 'fs';
+import { execSync as run } from 'child_process';
+import { sync as commandExists } from 'command-exists';
+import * as assert from 'assert';
 import * as chalk from 'chalk';
 import * as walk from 'walk-sync';
 import * as codeshift from 'jscodeshift';
@@ -104,6 +107,7 @@ export default class Blueprint extends Command {
       .filter((dirname) => isDirectory(path.join(dir, dirname)))
       .reduce<{ [key: string]: typeof Blueprint }>((BlueprintsSoFar, dirname: string) => {
         let BlueprintClass = tryRequire(path.join(dir, dirname));
+        assert(BlueprintClass, `Unable to load blueprint from ${ path.join(dir, dirname) }`);
         BlueprintClass.addon = addonName;
         BlueprintsSoFar[dirname] = BlueprintClass.default || BlueprintClass;
         return BlueprintsSoFar;
@@ -391,5 +395,61 @@ export default class Blueprint extends Command {
     }).remove();
     fs.writeFileSync(routesFilepath, ast.toSource());
   }
+
+  /**
+   * Add a package to this project, using yarn or npm as appropriate.
+   */
+  public installPackage(pkgName: string, dev?: boolean): void {
+    debug(`installing ${ pkgName }`);
+    if (this.shouldUseYarn()) {
+      run(`yarn add ${ dev ? '--dev' : '' } ${ pkgName }`);
+    } else {
+      run(`npm install ${ dev ? '-D' : '-S' } ${ pkgName }`);
+    }
+  }
+
+  /**
+   * Add multiple packages to this project, using yarn or npm as appropriate.
+   */
+  public installPackages(pkgNames: string[], dev?: boolean): void {
+    debug(`installing ${ pkgNames.join(', ') }`);
+    if (this.shouldUseYarn()) {
+      run(`yarn add ${ dev ? '--dev' : '' } ${ pkgNames.join(' ') }`);
+    } else {
+      run(`npm install ${ dev ? '-D' : '-S' } ${ pkgNames.join(' ') }`);
+    }
+  }
+
+  /**
+   * Remove a package from this project, using yarn or npm as appropriate.
+   */
+  public uninstallPackage(pkgName: string): void {
+    debug(`uninstalling ${ pkgName }`);
+    if (this.shouldUseYarn()) {
+      run(`yarn remove ${ pkgName }`);
+    } else {
+      run(`npm uninstall -S ${ pkgName }`);
+    }
+  }
+
+  /**
+   * Remove multiple packages from this project, using yarn or npm as appropriate.
+   */
+  public uninstallPackages(pkgNames: string[]): void {
+    debug(`uninstalling ${ pkgNames.join(', ') }`);
+    if (this.shouldUseYarn()) {
+      run(`yarn remove ${ pkgNames.join(' ') }`);
+    } else {
+      run(`npm uninstall -S ${ pkgNames.join(' ') }`);
+    }
+  }
+
+  /**
+   * Check to see whether this project is using yarn for package management
+   */
+  public shouldUseYarn() {
+    return commandExists('yarn') && fs.existsSync('yarn.lock');
+  }
+
 
 }
