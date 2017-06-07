@@ -27,13 +27,14 @@ abstract class Command {
    */
   public static configure(commandName: string, yargs: Yargs, projectPkg: any, context?: any): Yargs {
     let command = commandName;
+    let abbreviations = command.split('').map((letter, i) => command.substr(0, i + 1));
     if (this.params) {
       command += ` ${ this.params }`;
     }
     debug(`adding command: ${ command }`);
     return yargs.command({
       command,
-      aliases: this.aliases,
+      aliases: this.aliases.concat(abbreviations),
       describe: this.description,
       builder: (commandArgs: Yargs) => {
         debug(`building options for ${ commandName }`);
@@ -80,7 +81,7 @@ abstract class Command {
   /**
    * An array of possible aliases for this command's name
    */
-  public static aliases: string[];
+  public static aliases: string[] = [];
 
   /**
    * Description of what the command does. Displayed when the root help message prints
