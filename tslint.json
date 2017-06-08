@@ -18,8 +18,8 @@
       "order": [
         "static-field",
         "static-method",
-        "constructor",
         "instance-field",
+        "constructor",
         "instance-method"
       ]
     } ],

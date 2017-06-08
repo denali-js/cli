@@ -54,6 +54,24 @@ const debug = createDebug('denali-cli:blueprint');
 export default class Blueprint extends Command {
 
   /**
+   * The name used to invoke this blueprint.
+   */
+  public static blueprintName: string;
+
+  /**
+   * The source directory for this blueprints
+   */
+  public static dir: string;
+
+  /**
+   * Files that should be renamed in all blueprints
+   * Can be overriden/extended by individual addons
+   */
+  public static renamedFiles: any = {
+      gitignore: '.gitignore'
+  };
+
+  /**
    * Convenience method for calling `.findBlueprints()` and then `.configureBlueprints()`
    */
   public static findAndConfigureBlueprints(yargs: yargs.Argv, action: 'generate' | 'destroy', projectPkg: any) {
@@ -139,24 +157,6 @@ export default class Blueprint extends Command {
         'Commands:': 'Available Blueprints:'
       });
   }
-
-  /**
-   * The name used to invoke this blueprint.
-   */
-  public static blueprintName: string;
-
-  /**
-   * The source directory for this blueprints
-   */
-  public static dir: string;
-
-  /**
-   * Files that should be renamed in all blueprints
-   * Can be overriden/extended by individual addons
-   */
-  public static renamedFiles: any = {
-      gitignore: '.gitignore'
-  };
 
   /**
    * Should we generate or destroy this blueprint?

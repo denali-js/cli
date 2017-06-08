@@ -131,6 +131,27 @@ export default class Builder {
   public isDevelopingAddon = false;
 
   /**
+   * An array of builder instances for child addons of this package
+   */
+  public childBuilders: Builder[];
+
+  /**
+   * Modify the build of the parent package that is consuming this addon.
+   *
+   * @param tree the tree representing the parent package
+   * @param dir the absolute path to the parent package source
+   */
+  public processParent: (tree: Tree, dir: string)  => Tree;
+
+  /**
+   * Modify this package's build
+   *
+   * @param tree the tree representing the package
+   * @param dir the absolute path to the package source
+   */
+  public processSelf: (tree: Tree, dir: string) => Tree;
+
+  /**
    * Creates an instance of Builder for the given directory, as a child of the given Project. If
    * preseededAddons are supplied, they will be included as child addons of this Builder instance.
    */
@@ -198,27 +219,6 @@ export default class Builder {
     // Combine everything into our unified source tree, ready for building
     return new MergeTree(sourceTrees, { overwrite: true });
   }
-
-  /**
-   * An array of builder instances for child addons of this package
-   */
-  public childBuilders: Builder[];
-
-  /**
-   * Modify the build of the parent package that is consuming this addon.
-   *
-   * @param tree the tree representing the parent package
-   * @param dir the absolute path to the parent package source
-   */
-  public processParent: (tree: Tree, dir: string)  => Tree;
-
-  /**
-   * Modify this package's build
-   *
-   * @param tree the tree representing the package
-   * @param dir the absolute path to the package source
-   */
-  public processSelf: (tree: Tree, dir: string) => Tree;
 
   /**
    * Return a single broccoli tree that represents the completed build output for this package

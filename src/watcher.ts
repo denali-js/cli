@@ -1,9 +1,12 @@
 import { Tree } from './builder';
 import { Watcher } from 'broccoli/lib';
 import { resolve } from 'bluebird';
+import * as createDebug from 'debug';
 import {
   noop
 } from 'lodash';
+
+const debug = createDebug('denali-cli:watcher');
 
 /**
  * The PausingWatcher class is a hack around a limitation of Broccoli's internal Watcher, which
@@ -23,47 +26,44 @@ import {
 export default class PausingWatcher extends Watcher {
 
   /**
-   * Is the watcher currently ready to start a rebuild?
-   */
-  public readyForRebuild = false;
-
-  /**
-   * Is a prebuild currently in progress?
-   */
-  public prebuildInProgress = false;
-
-  /**
    * Callback invoked when there are changes, but before the rebuild is triggered. If a promise is
    * returned, the rebuild will wait until the promise resolves before starting.
    */
   public beforeRebuild: () => Promise<void> | void;
 
-  constructor(tree: Tree, options: { beforeRebuild(): Promise<void> | void, interval: number }) {
+  constructor(tree: Tree, options: { debounce: number, beforeRebuild(): Promise<void> | void }) {
     super(tree, options);
     this.beforeRebuild = options.beforeRebuild || noop;
   }
 
   /**
-   * Patch the detectChanges to hide changes until beforeRebuild resolves
+   * Patch broccol watcher's _change method to handle the change event
    */
-  public detectChanges() {
-    let changedDirs = super.detectChanges();
-    if (changedDirs.length > 0) {
-      if (!this.readyForRebuild) {
-        if (!this.prebuildInProgress) {
-          this.prebuildInProgress = true;
-          resolve(this.beforeRebuild()).then(() => {
-            this.readyForRebuild = true;
-            this.prebuildInProgress = false;
-          });
-        }
-      } else {
-        this.readyForRebuild = false;
-        this.emit('buildstart');
-        return changedDirs;
-      }
+  protected _change() {
+    if (!this._ready) {
+      debug('change ignored: not ready');
+      return;
     }
-    return [];
+
+    if (this._rebuildScheduled) {
+      debug('change ignored: rebuild already scheduled');
+      return;
+    }
+
+    this._rebuildScheduled = true;
+    // Wait for current build, and ignore build failure
+    // tslint:disable:next-line no-empty
+    resolve(this.currentBuild).catch(() => {}).then(() => {
+      if (this._quitting) { return; }
+      this.currentBuild = new Promise((resolve) => {
+        debug('debouncing build');
+        this.trigger('debounce');
+        setTimeout(resolve, this.options.debounce);
+      }).then(() => resolve(this.beforeRebuild())).then(() => {
+        this._rebuildScheduled = false;
+        return this._build();
+      });
+    });
   }
 
 }

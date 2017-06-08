@@ -20,8 +20,16 @@ declare module "command-exists";
 declare module "broccoli/lib" {
   class Watcher {
     constructor(tree: any, options: any)
-    detectChanges(): string[];
-    emit: (e: string) => void;
+    protected _ready: boolean;
+    protected _rebuildScheduled: boolean;
+    protected _quitting: boolean;
+    protected currentBuild: Promise<any>;
+    protected options: any;
+    public start(): Promise<void>;
+    public quit(): Promise<void>;
+    protected _change();
+    protected _build(): Promise<void>;
+    trigger: (e: string) => void;
     on: (e: string, cb: (...args: any[]) => void) => void;
   }
 }
