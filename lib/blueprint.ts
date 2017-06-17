@@ -163,7 +163,7 @@ export default class Blueprint extends Command {
    */
   public async run(argv: any) {
     if (argv.action === 'generate') {
-      await  this.generate(argv);
+      await this.generate(argv);
     } else {
       await this.destroy(argv);
     }

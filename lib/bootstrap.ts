@@ -35,7 +35,7 @@ export default function run(projectPkg?: any)  {
   debug('discovering commands from addons');
   let commands: { [key: string]: typeof Command } = {};
   let coreCommands: { [key: string]: typeof Command };
-  let cliCommands: { [key: string]: typeof Command };
+  let globalCommands: { [key: string]: typeof Command };
   // Special case Denali itself - we want to treat the Denali source like a local project, but it
   // won't have a dependency on Denali, so it won't be able to load core commands like build and
   // test from a local copy of Denali.  So to get the core commands, we point it to the global
@@ -61,11 +61,14 @@ export default function run(projectPkg?: any)  {
     }
   });
 
-  // Special-case denali-cli commands
-  cliCommands = discoverCommands(commands, 'denali-cli', path.join(__dirname, '..', 'commands'));
+  // Core commands take precedence over others
+  commands = Object.assign(commands, coreCommands)
 
-  // Cli & Core commands take precedence
-  commands = Object.assign(commands, coreCommands, cliCommands);
+  // Special-case denali-cli commands
+  globalCommands = discoverCommands(commands, 'denali-cli', path.join(__dirname, '..', 'commands'));
+
+  // Global commands take precendence over all
+  commands = Object.assign(commands, globalCommands);
 
   forEach(commands, (CommandClass: typeof Command, name: string): void => {
     try {
