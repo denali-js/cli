@@ -234,6 +234,8 @@ export default class Project {
         lint: this.lint,
         audit: this.audit
       });
+      // TODO: revisit to fix promise issues
+      // tslint:disable-next-line:no-floating-promises
       addonProject.watch({ onBuild: options.onBuild, outputDir: addonDist });
     });
 

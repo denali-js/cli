@@ -14,7 +14,7 @@ const debug = createDebug('denali-cli:builder');
 
 // Because it's nice to have a named type for this
 // tslint:disable-next-line:no-empty-interface
-export interface Tree {};
+export interface Tree {}
 
 /**
  * The Builder class is responsible for taking a Denali package (an app or an addon), and performing
@@ -123,12 +123,33 @@ export default class Builder {
   public addons: PluginSummary[];
 
   /**
+   * An array of builder instances for child addons of this package
+   */
+  public childBuilders: Builder[];
+
+  /**
    * If true, when the root Project is built, it will create a child Project for this package,
    * which will watch for changes and trigger a rebuild of this package as well as the root Project.
    *
    * Warning: experimental and highly unstable
    */
   public isDevelopingAddon = false;
+
+  /**
+   * Modify the build of the parent package that is consuming this addon.
+   *
+   * @param tree the tree representing the parent package
+   * @param dir the absolute path to the parent package source
+   */
+  public processParent: (tree: Tree, dir: string) => Tree;
+
+  /**
+   * Modify this package's build
+   *
+   * @param tree the tree representing the package
+   * @param dir the absolute path to the package source
+   */
+  public processSelf: (tree: Tree, dir: string) => Tree;
 
   /**
    * Creates an instance of Builder for the given directory, as a child of the given Project. If
@@ -148,77 +169,6 @@ export default class Builder {
       include: preseededAddons
     });
   }
-
-  /**
-   * Returns an array of top-level directories within this package that should go through the build
-   * process. Note that top-level files cannot be built. You can include them (unbuilt) in the final
-   * output via the `packageFiles` property; see https://github.com/broccolijs/broccoli/issues/173#issuecomment-47584836
-   */
-  public sourceDirs(): string[] {
-    let dirs = [ 'app', 'blueprints', 'commands', 'config', 'lib' ];
-    if (this.project.environment === 'test') {
-      dirs.push('test');
-    }
-    return dirs;
-  }
-
-  /**
-   * Generic treeFor method that simply returns the supplied directory as is. You could override
-   * this to customize the build process for all files.
-   */
-  public treeFor(dir: string): string | Tree {
-    return dir;
-  }
-
-
-  /**
-   * Compiles the base build tree which will be passed to the user-defined build hooks. Grabs all
-   * the top-level directories to be built, runs the treeFor hooks on each, adds package files
-   */
-  private _prepareSelf(): Tree {
-    // Get the various source dirs we'll use. This is important because broccoli
-    // cannot pick files at the root of the project directory.
-    let dirs = this.sourceDirs();
-
-    // Give any subclasses a chance to override the source directories by defining
-    // a treeFor* method
-    let sourceTrees = dirs.map((dir) => {
-      let treeFor = this[`treeFor${ upperFirst(dir) }`] || this.treeFor;
-      let tree = treeFor.call(this, path.join(this.dir, dir));
-      if (typeof tree !== 'string' || fs.existsSync(tree)) {
-        return new Funnel(tree, { annotation: dir, destDir: dir });
-      }
-      return false;
-    }).filter(Boolean);
-
-    // Copy top level files into our build output (this special tree is
-    // necessary because broccoli can't pick a file from the root dir).
-    sourceTrees.push(new PackageTree(this, { files: this.packageFiles }));
-
-    // Combine everything into our unified source tree, ready for building
-    return new MergeTree(sourceTrees, { overwrite: true });
-  }
-
-  /**
-   * An array of builder instances for child addons of this package
-   */
-  public childBuilders: Builder[];
-
-  /**
-   * Modify the build of the parent package that is consuming this addon.
-   *
-   * @param tree the tree representing the parent package
-   * @param dir the absolute path to the parent package source
-   */
-  public processParent: (tree: Tree, dir: string)  => Tree;
-
-  /**
-   * Modify this package's build
-   *
-   * @param tree the tree representing the package
-   * @param dir the absolute path to the package source
-   */
-  public processSelf: (tree: Tree, dir: string) => Tree;
 
   /**
    * Return a single broccoli tree that represents the completed build output for this package
@@ -252,6 +202,55 @@ export default class Builder {
     }
 
     return tree;
+  }
+
+  /**
+   * Returns an array of top-level directories within this package that should go through the build
+   * process. Note that top-level files cannot be built. You can include them (unbuilt) in the final
+   * output via the `packageFiles` property; see https://github.com/broccolijs/broccoli/issues/173#issuecomment-47584836
+   */
+  public sourceDirs(): string[] {
+    let dirs = [ 'app', 'blueprints', 'commands', 'config', 'lib' ];
+    if (this.project.environment === 'test') {
+      dirs.push('test');
+    }
+    return dirs;
+  }
+
+  /**
+   * Generic treeFor method that simply returns the supplied directory as is. You could override
+   * this to customize the build process for all files.
+   */
+  public treeFor(dir: string): string | Tree {
+    return dir;
+  }
+
+  /**
+   * Compiles the base build tree which will be passed to the user-defined build hooks. Grabs all
+   * the top-level directories to be built, runs the treeFor hooks on each, adds package files
+   */
+  private _prepareSelf(): Tree {
+    // Get the various source dirs we'll use. This is important because broccoli
+    // cannot pick files at the root of the project directory.
+    let dirs = this.sourceDirs();
+
+    // Give any subclasses a chance to override the source directories by defining
+    // a treeFor* method
+    let sourceTrees = dirs.map((dir) => {
+      let treeFor = this[`treeFor${ upperFirst(dir) }`] || this.treeFor;
+      let tree = treeFor.call(this, path.join(this.dir, dir));
+      if (typeof tree !== 'string' || fs.existsSync(tree)) {
+        return new Funnel(tree, { annotation: dir, destDir: dir });
+      }
+      return false;
+    }).filter(Boolean);
+
+    // Copy top level files into our build output (this special tree is
+    // necessary because broccoli can't pick a file from the root dir).
+    sourceTrees.push(new PackageTree(this, { files: this.packageFiles }));
+
+    // Combine everything into our unified source tree, ready for building
+    return new MergeTree(sourceTrees, { overwrite: true });
   }
 
 }
