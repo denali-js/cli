@@ -1,7 +1,6 @@
 import {
   template,
   forEach,
-  merge,
   assign,
   intersection,
   mapKeys,
@@ -18,14 +17,10 @@ import * as codeshift from 'jscodeshift';
 import * as mkdirp from 'mkdirp';
 import * as rimraf from 'rimraf';
 import * as yargs from 'yargs';
-import requireTree = require('require-tree');
 import { sync as isDirectory } from 'is-directory';
-import Project from './project';
-import { Options as YargsOptions } from 'yargs';
 import ui from './ui';
 import findAddons from './find-addons';
 import Command from './command';
-import * as argParser from 'yargs';
 import * as createDebug from 'debug';
 import * as tryRequire from 'try-require';
 

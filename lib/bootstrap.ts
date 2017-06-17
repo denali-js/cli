@@ -2,7 +2,6 @@ import {
   intersection,
   keys,
   forEach,
-  findKey,
   assign,
   mapKeys
 } from 'lodash';
@@ -15,7 +14,6 @@ import requireTree = require('require-tree');
 import Command from './command';
 import findAddons from './find-addons';
 import * as dedent from 'dedent-js';
-import * as tryRequire from 'try-require';
 import * as dotenv from 'dotenv';
 
 const debug = createDebug('denali-cli:bootstrap');
@@ -37,6 +35,7 @@ export default function run(projectPkg?: any)  {
   debug('discovering commands from addons');
   let commands: { [key: string]: typeof Command } = {};
   let coreCommands: { [key: string]: typeof Command };
+  let cliCommands: { [key: string]: typeof Command };
   // Special case Denali itself - we want to treat the Denali source like a local project, but it
   // won't have a dependency on Denali, so it won't be able to load core commands like build and
   // test from a local copy of Denali.  So to get the core commands, we point it to the global
@@ -53,7 +52,7 @@ export default function run(projectPkg?: any)  {
   addons.forEach((addon) => {
     let addonCommands = discoverCommands(commands, addon.pkg.name, path.join(addon.dir, 'commands'));
     if (addon.pkg.name === 'denali') {
-      ui.info(`denali v${ addon.pkg.version } [${ projectPkg && projectPkg.name !== 'denali' ? 'local' : 'global' }]\n`);
+      ui.info(`| denali v${ addon.pkg.version } [${ projectPkg && projectPkg.name !== 'denali' ? 'local' : 'global' }]\n`);
       debug('found core denali commands');
       coreCommands = addonCommands;
     } else {
@@ -62,14 +61,11 @@ export default function run(projectPkg?: any)  {
     }
   });
 
-  // Ensure that denali itself is installed so we have the base commands
-  if (!coreCommands) {
-    ui.error('Whoops, looks like you have not installed denali itself yet.');
-    ui.error('You need to install denali globally (`$ npm i -g denali`) alongside the CLI.');
-  }
+  // Special-case denali-cli commands
+  cliCommands = discoverCommands(commands, 'denali-cli', path.join(__dirname, '..', 'commands'));
 
-  // Core commands take precedence
-  commands = Object.assign(commands, coreCommands);
+  // Cli & Core commands take precedence
+  commands = Object.assign(commands, coreCommands, cliCommands);
 
   forEach(commands, (CommandClass: typeof Command, name: string): void => {
     try {

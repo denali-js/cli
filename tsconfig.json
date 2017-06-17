@@ -12,9 +12,16 @@
       "inlineSources": true,
       "outDir": "dist",
       "baseUrl": ".",
-      "skipLibCheck": true
+      "skipLibCheck": true,
+      "sourceRoot": ".",
+      "noUnusedLocals": true
   },
   "include": [
-    "src/**/*"
-  ]
+    "bin/*",
+    "lib/**/*",
+    "blueprints/*/index.ts",
+    "commands/*",
+    "test/**/*"
+  ],
+  "exclude": [ "blueprints/*/files/**" ]
 }

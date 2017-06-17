@@ -1,17 +1,11 @@
 import {
-  forIn,
   forEach,
-  padEnd,
-  includes,
   assign,
   kebabCase
 } from 'lodash';
-import * as path from 'path';
-import findup = require('findup-sync');
 import ui from './ui';
-import yargs, { Argv as Yargs, Options as YargsOptions } from 'yargs';
+import { Argv as Yargs, Options as YargsOptions } from 'yargs';
 import * as createDebug from 'debug';
-import * as tryRequire from 'try-require';
 
 const debug = createDebug('denali-cli:command');
 

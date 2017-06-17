@@ -8,7 +8,6 @@ import { execSync } from 'child_process';
 import { sync as commandExists } from 'command-exists';
 import * as YarnConstants from 'yarn/lib/constants';
 import * as createDebug from 'debug';
-import ui from './ui';
 
 const debug = createDebug('denali-cli:find-addons');
 

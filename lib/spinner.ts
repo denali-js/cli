@@ -1,5 +1,4 @@
 import { fork, ChildProcess } from 'child_process';
-import { fromNode, delay } from 'bluebird';
 import * as path from 'path';
 
 let childSpinner: ChildProcess;
