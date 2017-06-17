@@ -31,7 +31,8 @@
   "scripts": {
     "build": "tsc && mv dist/bin/denali.js dist/bin/denali && chmod +x dist/bin/denali && echo 'Build successful'",
     "prepublish": "in-publish && npm run build || not-in-publish",
-    "lint": "tslint --project tsconfig.json -c tslint.json --type-check | sed \"s|$PWD/||\""
+    "lint": "tslint --project tsconfig.json -c tslint.json --type-check | sed \"s|$PWD/||\"",
+    "test": "npm run lint"
   },
   "license": "MIT",
   "dependencies": {
