@@ -13,13 +13,12 @@
     "indent": [ true, "spaces" ],
     "interface-over-type-literal": true,
     "jsdoc-format": true,
-    "member-access": true,
     "member-ordering": [ true, {
       "order": [
         "static-field",
         "static-method",
-        "constructor",
         "instance-field",
+        "constructor",
         "instance-method"
       ]
     } ],
@@ -46,7 +45,6 @@
     "no-switch-case-fall-through": true,
     "no-trailing-whitespace": true,
     "no-unsafe-finally": true,
-    "no-unused-new": true,
     "no-var-keyword": true,
     "no-void-expression": true,
     "object-literal-key-quotes": [ true, "as-needed" ],

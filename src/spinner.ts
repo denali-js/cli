@@ -15,7 +15,9 @@ let uid = 0;
  */
 async function startChildSpinner() {
   await new Promise<void>((resolve, reject) => {
-    let fallback = setTimeout(() => reject('Spinner process failed to startup on time'), 4000);
+    let fallback = setTimeout(() => {
+      reject('Spinner process failed to startup on time');
+    }, 4000);
     childSpinner = fork(path.join(__dirname, 'spinner-child.js'));
     childSpinner.send({ operation: 'hello' });
     childSpinner.once('message', () => {
@@ -35,12 +37,13 @@ async function run(operation: string, ...args: any[]): Promise<void> {
   }
   await new Promise<void>((resolve, reject) => {
     let fallback = setTimeout(() => {
-      reject(new Error(`Spinner process failed to acknowledge a command on time: ${ operation }(${ args.join(', ') })`))
+      reject(new Error(`Spinner process failed to acknowledge a command on time: ${ operation }(${ args.join(', ') })`));
     }, 4000);
     let id = uid++;
     childSpinner.send({ operation, args, id });
     childSpinner.on('message', receiveAck);
     // Wait to resolve the parent promise until we get an ack from the child process.
+    // tslint:disable-next-line:completed-docs
     function receiveAck(data: { finished?: boolean, ackId: number }) {
       if (data.ackId === id) {
         clearTimeout(fallback);
@@ -86,5 +89,5 @@ export default {
    */
   async finish(symbol: string, text: string) {
     await run('finish', symbol, text);
-  },
+  }
 };

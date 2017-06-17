@@ -38,6 +38,7 @@ export default class PausingWatcher extends Watcher {
    */
   public beforeRebuild: () => Promise<void> | void;
 
+  // tslint:disable-next-line:member-ordering
   constructor(tree: Tree, options: { beforeRebuild(): Promise<void> | void, interval: number }) {
     super(tree, options);
     this.beforeRebuild = options.beforeRebuild || noop;

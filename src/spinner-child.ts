@@ -11,22 +11,34 @@ let isThisSpinnerProcessFinished = false;
 
 let operations: { [method: string]: (...args: any[]) => void } = {
 
+  /**
+   * Starts the spinner
+   */
   start(msg: string): void {
     spinner.text = msg;
     spinner.start();
   },
 
+  /**
+   * Marks the spinner as "succeeded"
+   */
   succeed(msg?: string): void {
     spinner.succeed(msg);
     finish();
   },
 
+  /**
+   * Marks the spinner as "failed"
+   */
   fail(msg?: string): void {
     spinner.stream = process.stderr;
     spinner.fail(msg);
     finish();
   },
 
+  /**
+   * Finishes the spinner with a custom symbol
+   */
   finish(symbol: string, text: string): void {
     spinner.stopAndPersist({ symbol, text });
     finish();
@@ -34,7 +46,10 @@ let operations: { [method: string]: (...args: any[]) => void } = {
 
 };
 
-// Clean up event listeners so the process can exit gracefully, and mark this process as finished.
+/**
+ * Clean up event listeners so the process can exit gracefully,
+ * and mark this process as finished.
+ */
 function finish() {
   process.removeAllListeners('message');
   isThisSpinnerProcessFinished = true;

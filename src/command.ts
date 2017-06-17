@@ -23,51 +23,6 @@ const debug = createDebug('denali-cli:command');
 abstract class Command {
 
   /**
-   * Accepts the global yargs object, gives the command a chance to define it's interface.
-   */
-  public static configure(commandName: string, yargs: Yargs, projectPkg: any, context?: any): Yargs {
-    let command = commandName;
-    let abbreviations = command.split('').map((letter, i) => command.substr(0, i + 1));
-    if (this.params) {
-      command += ` ${ this.params }`;
-    }
-    debug(`adding command: ${ command }`);
-    return yargs.command({
-      command,
-      aliases: this.aliases.concat(abbreviations),
-      describe: this.description,
-      builder: (commandArgs: Yargs) => {
-        debug(`building options for ${ commandName }`);
-        commandArgs = this.configureOptions(commandName, commandArgs, projectPkg);
-        if (this.configureSubcommands) {
-          commandArgs = this.configureSubcommands(commandName, commandArgs, projectPkg);
-        }
-        return commandArgs;
-      },
-      handler: (args) => {
-        // tslint:disable-next-line:no-floating-promises
-        this._run(assign(args, context));
-      }
-    });
-  }
-
-  /**
-   * Takes the yargs object for this command, gives the command a chance to define any options
-   */
-  protected static configureOptions(commandName: string, yargs: Yargs, projectPkg: any) {
-    yargs.usage(this.longDescription);
-    forEach(this.flags, (options, flagName) => {
-      yargs = yargs.option(kebabCase(flagName), options);
-    });
-    return yargs;
-  }
-
-  /**
-   * Takes the yargs object for this command, gives the command a chance to define any subcommands
-   */
-  protected static configureSubcommands: (commandName: string, yargs: Yargs, projectPkg: any) => Yargs;
-
-  /**
    * The name of the addon that supplied this command. Set by the boostrapping script as it loads
    * commands.
    */
@@ -111,6 +66,11 @@ abstract class Command {
   public static runsInApp: boolean;
 
   /**
+   * Takes the yargs object for this command, gives the command a chance to define any subcommands
+   */
+  protected static configureSubcommands: (commandName: string, yargs: Yargs, projectPkg: any) => Yargs;
+
+  /**
    * Do some basic checks (i.e. are we obeying runsInApp) then instantiate and run the command
    *
    * @param argv the yargs-parsed command line arguments
@@ -135,6 +95,46 @@ abstract class Command {
       ui.error(`Error encountered when running "${ this.commandName }" command`);
       ui.error(e.stack);
     }
+  }
+
+  /**
+   * Accepts the global yargs object, gives the command a chance to define it's interface.
+   */
+  public static configure(commandName: string, yargs: Yargs, projectPkg: any, context?: any): Yargs {
+    let command = commandName;
+    let abbreviations = command.split('').map((letter, i) => command.substr(0, i + 1));
+    if (this.params) {
+      command += ` ${ this.params }`;
+    }
+    debug(`adding command: ${ command }`);
+    return yargs.command({
+      command,
+      aliases: this.aliases.concat(abbreviations),
+      describe: this.description,
+      builder: (commandArgs: Yargs) => {
+        debug(`building options for ${ commandName }`);
+        commandArgs = this.configureOptions(commandName, commandArgs, projectPkg);
+        if (this.configureSubcommands) {
+          commandArgs = this.configureSubcommands(commandName, commandArgs, projectPkg);
+        }
+        return commandArgs;
+      },
+      handler: (args) => {
+        // tslint:disable-next-line:no-floating-promises
+        this._run(assign(args, context));
+      }
+    });
+  }
+
+  /**
+   * Takes the yargs object for this command, gives the command a chance to define any options
+   */
+  protected static configureOptions(commandName: string, yargs: Yargs, projectPkg: any) {
+    yargs.usage(this.longDescription);
+    forEach(this.flags, (options, flagName) => {
+      yargs = yargs.option(kebabCase(flagName), options);
+    });
+    return yargs;
   }
 
   /**
