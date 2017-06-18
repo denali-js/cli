@@ -65,28 +65,28 @@ export default {
   /**
    * Start the spinner with the given message
    */
-  async start(msg: string) {
-    await run('start', msg);
+  async start(msg: string, id?: string) {
+    await run('start', msg, id);
   },
   /**
    * Stop the spinner, replace the spinner graphic with a checkmark, optionally update the message,
    * and turn it green.
    */
-  async succeed(msg?: string) {
-    await run('succeed', msg);
+  async succeed(msg?: string, id?: string) {
+    await run('succeed', msg, id);
   },
   /**
    * Stop the spinner, replace the spinner graphic with an X, optionally update the message, and
    * turn it red.
    */
-  async fail(msg?: string) {
-    await run('fail', msg);
+  async fail(msg?: string, id?: string) {
+    await run('fail', msg, id);
   },
   /**
    * Stop the spinner, replace the spinner graphic with the supplied symbol and message with the
    * supplied text.
    */
-  async finish(symbol: string, text: string) {
-    await run('finish', symbol, text);
+  async finish(symbol: string, text: string, id?: string) {
+    await run('finish', symbol, text, id);
   }
 };

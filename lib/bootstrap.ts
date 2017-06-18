@@ -62,7 +62,7 @@ export default function run(projectPkg?: any)  {
   });
 
   // Core commands take precedence over others
-  commands = Object.assign(commands, coreCommands)
+  commands = Object.assign(commands, coreCommands);
 
   // Special-case denali-cli commands
   globalCommands = discoverCommands(commands, 'denali-cli', path.join(__dirname, '..', 'commands'));
