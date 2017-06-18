@@ -41,11 +41,6 @@ export default class CommandAcceptanceTest {
   protected projectRoot: string;
 
   /**
-   * The package.json of the project under test.
-   */
-  protected projectPkg: any;
-
-  /**
    * The path to the denali executable file that will be used when invoking the command
    */
   protected denaliPath: string;
@@ -84,7 +79,6 @@ export default class CommandAcceptanceTest {
     })).name;
     this.environment = options.environment || 'development';
     this.projectRoot = path.dirname(path.dirname(process.cwd()));
-    this.projectPkg = require(path.join(this.projectRoot, 'package.json'));
     // We don't use node_modules/.bin/denali because if denali-cli is linked in via yarn, it doesn't
     // add the binary symlinks to .bin. See https://github.com/yarnpkg/yarn/issues/2493
     this.denaliPath = path.join(this.projectRoot, 'node_modules', 'denali-cli', 'dist', 'bin', 'denali');
@@ -100,6 +94,7 @@ export default class CommandAcceptanceTest {
   populateWithDummy(): void {
     debug(`populating tmp directory for "${ this.command }" command with dummy app`);
     let dummy = path.join(this.projectRoot, 'test', 'dummy');
+    let projectPkg = require(path.join(this.projectRoot, 'package.json'));
     let tmpNodeModules = path.join(this.dir, 'node_modules');
     assert(!fs.existsSync(tmpNodeModules), 'You tried to run a CommandAcceptanceTest against a directory that already has an app in it. Did you forget to specify { populateWithDummy: false }?');
     // Copy over the dummy app
@@ -110,7 +105,7 @@ export default class CommandAcceptanceTest {
     fs.readdirSync(path.join(this.projectRoot, 'node_modules')).forEach((nodeModuleEntry) => {
       fs.symlinkSync(path.join(this.projectRoot, 'node_modules', nodeModuleEntry), path.join(tmpNodeModules, nodeModuleEntry));
     });
-    fs.symlinkSync(path.join(this.projectRoot, 'tmp', 'test', 'node_modules', this.projectPkg.name), path.join(tmpNodeModules, this.projectPkg.name));
+    fs.symlinkSync(path.join(this.projectRoot, 'tmp', 'test', 'node_modules', projectPkg.name), path.join(tmpNodeModules, projectPkg.name));
     debug('tmp directory populated');
   }
 

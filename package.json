@@ -25,14 +25,16 @@
   ],
   "devDependencies": {
     "@types/chalk": "^0.4.31",
+    "ava": "^0.19.1",
+    "nyc": "^11.0.2",
     "tslint": "^5.4.3",
     "typescript": "2.2.0"
   },
   "scripts": {
     "build": "tsc && mv dist/bin/denali.js dist/bin/denali && chmod +x dist/bin/denali && echo 'Build successful'",
     "prepublish": "in-publish && npm run build || not-in-publish",
-    "lint": "tslint --project tsconfig.json -c tslint.json --type-check | sed \"s|$PWD/||\"",
-    "test": "npm run lint"
+    "lint": "! tslint --project tsconfig.json -c tslint.json --type-check | sed \"s|$PWD/||\" | grep ERROR",
+    "test": "npm run lint && rm -rf dist coverage .nyc_output && npm run build && nyc ava dist/test/acceptance"
   },
   "license": "MIT",
   "dependencies": {
@@ -52,7 +54,6 @@
     "@types/source-map-support": "^0.2.28",
     "@types/tmp": "^0.0.33",
     "@types/yargs": "^6.6.0",
-    "ava": "^0.18.1",
     "bluebird": "^3.4.7",
     "broccoli": "^0.16.9",
     "broccoli-funnel": "^1.1.0",

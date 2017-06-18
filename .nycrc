@@ -1,0 +1,10 @@
+{
+  "exclude": [
+    "**/blueprints/*/files/**",
+    "dist/**",
+    "coverage/**",
+    "test/**",
+    "node_modules/**"
+  ],
+  "reporter": "json"
+}
