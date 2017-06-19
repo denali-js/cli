@@ -12,7 +12,7 @@
   "bin": {
     "denali": "dist/bin/denali"
   },
-  "main": "dist/index.js",
+  "main": "dist/lib/index.js",
   "engines": {
     "node": ">=6.9.0"
   },
@@ -25,14 +25,16 @@
   ],
   "devDependencies": {
     "@types/chalk": "^0.4.31",
+    "ava": "^0.19.1",
+    "nyc": "^11.0.2",
     "tslint": "^5.4.3",
     "typescript": "2.2.0"
   },
   "scripts": {
     "build": "tsc && mv dist/bin/denali.js dist/bin/denali && chmod +x dist/bin/denali && echo 'Build successful'",
     "prepublish": "in-publish && npm run build || not-in-publish",
-    "lint": "tslint --project tsconfig.json -c tslint.json --type-check | sed \"s|$PWD/||\"",
-    "test": "npm run lint"
+    "lint": "! tslint --project tsconfig.json -c tslint.json --type-check | sed \"s|$PWD/||\" | grep ERROR",
+    "test": "npm run lint && rm -rf dist coverage .nyc_output && npm run build && nyc ava dist/test/acceptance"
   },
   "license": "MIT",
   "dependencies": {
@@ -41,6 +43,7 @@
     "@types/dotenv": "^2.0.20",
     "@types/findup-sync": "^0.3.29",
     "@types/flat": "^0.0.28",
+    "@types/fs-extra": "^3.0.3",
     "@types/glob": "^5.0.30",
     "@types/lodash": "^4.14.52",
     "@types/mkdirp": "^0.3.29",
@@ -49,8 +52,8 @@
     "@types/rimraf": "^0.0.28",
     "@types/semver": "^5.3.30",
     "@types/source-map-support": "^0.2.28",
+    "@types/tmp": "^0.0.33",
     "@types/yargs": "^6.6.0",
-    "ava": "^0.18.1",
     "bluebird": "^3.4.7",
     "broccoli": "^0.16.9",
     "broccoli-funnel": "^1.1.0",
@@ -65,6 +68,7 @@
     "dotenv": "^4.0.0",
     "find-plugins": "^1.0.1",
     "findup-sync": "^0.4.0",
+    "fs-extra": "^3.0.1",
     "glob": "^7.0.3",
     "in-publish": "^2.0.0",
     "is-directory": "^0.3.1",
@@ -78,11 +82,12 @@
     "rimraf": "^2.5.4",
     "semver": "^5.3.0",
     "source-map-support": "^0.4.11",
+    "tmp": "^0.0.31",
     "try-require": "^1.2.1",
     "tslib": "^1.5.0",
     "walk-sync": "^0.3.1",
     "yargs": "^6.6.0",
     "yarn": "^0.19.1"
   },
-  "types": "dist/index.d.ts"
+  "types": "dist/lib/index.d.ts"
 }
