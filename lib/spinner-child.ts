@@ -1,4 +1,5 @@
-import ora = require('ora');
+import * as ora from 'ora';
+import { values } from 'lodash';
 
 // tslint:disable:isThisSpinnerProcessFinishedd-docs
 
@@ -8,21 +9,24 @@ let spinner = ora('');
 spinner.stream = process.stdout;
 
 let isThisSpinnerProcessFinished = false;
+let messageQueue: any = {};
 
 let operations: { [method: string]: (...args: any[]) => void } = {
 
   /**
    * Starts the spinner
    */
-  start(msg: string): void {
-    spinner.text = msg;
+  start(msg: string, id: string = 'default'): void {
+    messageQueue[id] = msg;
+    spinner.text = values(messageQueue).join(' | ');
     spinner.start();
   },
 
   /**
    * Marks the spinner as "succeeded"
    */
-  succeed(msg?: string): void {
+  succeed(msg?: string, id: string = 'default'): void {
+    delete messageQueue[id];
     spinner.succeed(msg);
     finish();
   },
@@ -30,7 +34,8 @@ let operations: { [method: string]: (...args: any[]) => void } = {
   /**
    * Marks the spinner as "failed"
    */
-  fail(msg?: string): void {
+  fail(msg?: string, id: string = 'default'): void {
+    delete messageQueue[id];
     spinner.stream = process.stderr;
     spinner.fail(msg);
     finish();
@@ -39,7 +44,8 @@ let operations: { [method: string]: (...args: any[]) => void } = {
   /**
    * Finishes the spinner with a custom symbol
    */
-  finish(symbol: string, text: string): void {
+  finish(symbol: string, text: string, id: string = 'default'): void {
+    delete messageQueue[id];
     spinner.stopAndPersist({ symbol, text });
     finish();
   }
@@ -51,6 +57,13 @@ let operations: { [method: string]: (...args: any[]) => void } = {
  * and mark this process as finished.
  */
 function finish() {
+  if (Object.keys(messageQueue).length !== 0) {
+    // Restart spinner because we still have messages in the queue
+    spinner.text = values(messageQueue).join(' | ');
+    spinner.start();
+    return;
+  }
+
   process.removeAllListeners('message');
   isThisSpinnerProcessFinished = true;
 }

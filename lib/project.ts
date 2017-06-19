@@ -23,6 +23,7 @@ import Watcher from './watcher';
 import ui from './ui';
 import spinner from './spinner';
 import startTimer from './timer';
+import { each } from 'bluebird';
 
 const debug = createDebug('denali-cli:project');
 
@@ -214,7 +215,7 @@ export default class Project {
     // Start watcher
     let timer = startTimer();
     let { broccoliBuilder, builder } = this.getBuilderAndTree();
-    await spinner.start(`Building ${ this.pkg.name }`);
+    await spinner.start(`Building ${ this.pkg.name }`, this.pkg.name);
     let watcher = new Watcher(broccoliBuilder, { beforeRebuild: options.beforeRebuild, interval: 100 });
 
     // Watch/build any child addons under development
@@ -222,9 +223,9 @@ export default class Project {
       return childBuilder.isDevelopingAddon && fs.lstatSync(childBuilder.dir).isSymbolicLink();
     });
     // Don't finalize the first build until all the in-dev addons have built too
-    options.onBuild = after(inDevelopmentAddons.length, options.onBuild);
+    options.onBuild = after(inDevelopmentAddons.length + 1, options.onBuild);
     // Build the in-dev child addons
-    inDevelopmentAddons.forEach((childBuilder) => {
+    each(inDevelopmentAddons, async (childBuilder) => {
       let addonDist = fs.realpathSync(childBuilder.dir);
       debug(`"${ childBuilder.pkg.name }" (${ addonDist }) addon is under development, creating a project to watch & compile it`);
       let addonPackageDir = path.dirname(addonDist);
@@ -234,9 +235,7 @@ export default class Project {
         lint: this.lint,
         audit: this.audit
       });
-      // TODO: revisit to fix promise issues
-      // tslint:disable-next-line:no-floating-promises
-      addonProject.watch({ onBuild: options.onBuild, outputDir: addonDist });
+      return addonProject.watch({ onBuild: options.onBuild, outputDir: addonDist });
     });
 
     let spinnerStart: Promise<void>;
@@ -245,19 +244,20 @@ export default class Project {
     watcher.on('buildstart', async () => {
       debug('changes detected, rebuilding');
       timer = startTimer();
-      spinnerStart = spinner.start(`Building ${ this.pkg.name }`);
+      spinnerStart = spinner.start(`Building ${ this.pkg.name }`, this.pkg.name);
       await spinnerStart;
     });
     watcher.on('change', async (results: { directory: string, graph: any }) => {
       debug('rebuild finished, wrapping up');
       this.finishBuild(results, options.outputDir);
       await spinnerStart;
-      await spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
+      await spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`, this.pkg.name);
       spinnerStart = null;
       options.onBuild(this);
     });
     watcher.on('error', async (error: any) => {
-      await spinner.fail('Build failed');
+      await spinnerStart;
+      await spinner.fail('Build failed', this.pkg.name);
       if (error.file) {
         if (error.line && error.column) {
           ui.error(`File: ${ error.treeDir }/${ error.file }:${ error.line }:${ error.column }`);
