@@ -12,7 +12,7 @@
   "dependencies": {
     "bluebird": "^3.4.6",
     "eslint-config-denali": "^1.1.2",
-    "denali": "0.0.26",
+    "denali": "0.0.x",
     "denali-cli": "0.0.x",
     "lodash": "^4.0.0"
   },
