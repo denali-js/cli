@@ -409,7 +409,13 @@ export default class Blueprint extends Command {
   public installPackages(pkgNames: string[], dev?: boolean): void {
     debug(`installing ${ pkgNames.join(', ') }`);
     if (this.shouldUseYarn()) {
-      run(`yarn add ${ dev ? '--dev' : '' } ${ pkgNames.join(' ') }`);
+      pkgNames.forEach((pkgName) => {
+        try {
+          run(`yarn add ${ dev ? '--dev' : '' } ${ pkgName }`);
+        } catch (e) {
+          // Yarn fails the entire command if one package doesn't exist, so we run each separately
+        }
+      });
     } else {
       run(`npm install ${ dev ? '-D' : '-S' } ${ pkgNames.join(' ') }`);
     }
@@ -433,7 +439,13 @@ export default class Blueprint extends Command {
   public uninstallPackages(pkgNames: string[]): void {
     debug(`uninstalling ${ pkgNames.join(', ') }`);
     if (this.shouldUseYarn()) {
-      run(`yarn remove ${ pkgNames.join(' ') }`);
+      pkgNames.forEach((pkgName) => {
+        try {
+          run(`yarn remove ${ pkgName }`);
+        } catch (e) {
+          // Yarn fails the entire command if one package doesn't exist, so we run each separately
+        }
+      });
     } else {
       run(`npm uninstall -S ${ pkgNames.join(' ') }`);
     }
