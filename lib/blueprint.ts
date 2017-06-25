@@ -25,6 +25,7 @@ import * as createDebug from 'debug';
 import * as tryRequire from 'try-require';
 
 const debug = createDebug('denali-cli:blueprint');
+// tslint:disable-next-line:completed-docs
 function run(cmd: string, options: ExecSyncOptions = {}) {
   return execSync(cmd, Object.assign({ stdio: 'pipe' }, options));
 }
