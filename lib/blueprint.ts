@@ -8,7 +8,7 @@ import {
 } from 'lodash';
 import * as path from 'path';
 import * as fs from 'fs';
-import { execSync as run } from 'child_process';
+import { execSync, ExecSyncOptions } from 'child_process';
 import { sync as commandExists } from 'command-exists';
 import * as assert from 'assert';
 import * as chalk from 'chalk';
@@ -25,6 +25,9 @@ import * as createDebug from 'debug';
 import * as tryRequire from 'try-require';
 
 const debug = createDebug('denali-cli:blueprint');
+function run(cmd: string, options: ExecSyncOptions = {}) {
+  return execSync(cmd, Object.assign({ stdio: 'pipe' }, options));
+}
 
 /**
  * The Blueprint class manages generating code from a template, or "blueprint". Blueprints have
