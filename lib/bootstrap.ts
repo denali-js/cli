@@ -52,7 +52,13 @@ export default function run(projectPkg?: any)  {
   addons.forEach((addon) => {
     let addonCommands = discoverCommands(commands, addon.pkg.name, path.join(addon.dir, 'commands'));
     if (addon.pkg.name === 'denali') {
-      ui.info(`| denali v${ addon.pkg.version } [${ projectPkg && projectPkg.name !== 'denali' ? 'local' : 'global' }]\n`);
+      let denaliInstallType: string;
+      if (projectPkg && projectPkg.name !== 'denali') {
+        denaliInstallType = fs.lstatSync(addon.dir).isSymbolicLink() ? 'linked' : 'local';
+      } else {
+        denaliInstallType = 'global';
+      }
+      ui.info(` | denali v${ addon.pkg.version } [${ denaliInstallType }]\n`);
       debug('found core denali commands');
       coreCommands = addonCommands;
     } else {

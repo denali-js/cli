@@ -3,6 +3,7 @@ import SourceMapSupport = require('source-map-support');
 import { satisfies } from 'semver';
 import * as chalk from 'chalk';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as resolve from 'resolve';
 import findup = require('findup-sync');
 
@@ -46,13 +47,14 @@ if (!pkgPath) {
   // If a local copy of denali exists, use that, unless we are actually running
   // this in the denali repo itself
   try {
-    let localDenaliCli = resolve.sync('denali-cli', { basedir: pkgDir });
-    let localDenaliPkgDir = path.dirname(findup('package.json', { cwd: localDenaliCli }));
-    let localDenaliCliPkg = require(path.join(localDenaliPkgDir, 'package.json'));
-    process.stdout.write(`cli v${ localDenaliCliPkg.version } [local] `);
+    let localCliMain = resolve.sync('denali-cli', { basedir: pkgDir });
+    let localCliDir = path.dirname(findup('package.json', { cwd: localCliMain }));
+    let cliPkgType = fs.lstatSync(localCliDir).isSymbolicLink() ? 'linked' : 'local';
+    let localCliPkg = require(path.join(localCliDir, 'package.json'));
+    process.stdout.write(`cli v${ localCliPkg.version } [${ cliPkgType }]`);
     try {
       process.chdir(pkgDir);
-      require(path.join(localDenaliPkgDir, 'dist', 'lib', 'bootstrap')).default(pkg);
+      require(path.join(localCliDir, 'dist', 'lib', 'bootstrap')).default(pkg);
     } catch (error) {
       console.error('Error encountered while starting up denali-cli:');
       console.error(error.stack);
