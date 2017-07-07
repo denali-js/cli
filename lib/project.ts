@@ -18,6 +18,7 @@ import * as Funnel from 'broccoli-funnel';
 import * as createDebug from 'debug';
 import * as tryRequire from 'try-require';
 import * as semver from 'semver';
+import * as NestedError from 'nested-error-stacks';
 import Builder, { Tree } from './builder';
 import Watcher from './watcher';
 import ui from './ui';
@@ -196,10 +197,9 @@ export default class Project {
     } catch (err) {
       await spinner.fail('Build failed');
       if (err.file) {
-        ui.error(`File: ${ err.file }`);
+        throw new NestedError(`Build failed on file: ${ err.file }`, err);
       }
-      ui.error(err.stack);
-      throw err;
+      throw new NestedError('Project failed to build', err);
     } finally {
       await broccoliBuilder.cleanup();
     }
@@ -298,8 +298,7 @@ export default class Project {
         environment: this.environment
       });
     } catch (error) {
-      ui.error(error.stack);
-      throw error;
+      throw new NestedError('Failed to create application', error);
     }
   }
 

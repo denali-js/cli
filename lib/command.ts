@@ -6,6 +6,7 @@ import {
 import ui from './ui';
 import { Argv as Yargs, Options as YargsOptions } from 'yargs';
 import * as createDebug from 'debug';
+import * as NestedError from 'nested-error-stacks';
 
 const debug = createDebug('denali-cli:command');
 
@@ -86,8 +87,7 @@ abstract class Command {
     try {
       await command.run(argv);
     } catch (e) {
-      ui.error(`Error encountered when running "${ this.commandName }" command`);
-      ui.error(e.stack);
+      throw new NestedError(`"${ this.commandName }" command failed`, e);
     }
   }
 
@@ -114,8 +114,13 @@ abstract class Command {
         return commandArgs;
       },
       handler: (args) => {
-        // tslint:disable-next-line:no-floating-promises
-        this._run(assign(args, context));
+        this._run(assign(args, context)).catch((e) => {
+          let stack = e.stack;
+          // TODO cleanup this stacktrace: invert the wrapping so most specific appears at the top,
+          // remove internal module frames, apply color if on a terminal
+          // tslint:disable-next-line:no-console
+          console.error(stack);
+        });
       }
     });
   }

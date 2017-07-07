@@ -4,6 +4,7 @@ import { satisfies } from 'semver';
 import * as chalk from 'chalk';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as NestedError from 'nested-error-stacks';
 import * as resolve from 'resolve';
 import findup = require('findup-sync');
 
@@ -32,8 +33,7 @@ function loadGlobalCli() {
   try {
     require('../lib/bootstrap').default();
   } catch (error) {
-    console.error('Error encountered while starting up denali-cli:');
-    console.error(error.stack);
+    throw new NestedError('Globally installed CLI failed to load', error);
   }
 }
 

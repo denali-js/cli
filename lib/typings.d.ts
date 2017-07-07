@@ -4,6 +4,7 @@ declare module "is-directory";
 declare module "jscodeshift";
 declare module "walk-sync";
 declare module "require-tree";
+declare module "nested-error-stacks";
 declare module "dedent-js";
 declare module "nsp";
 declare module "ora";

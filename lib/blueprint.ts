@@ -17,6 +17,7 @@ import * as codeshift from 'jscodeshift';
 import * as mkdirp from 'mkdirp';
 import * as rimraf from 'rimraf';
 import * as yargs from 'yargs';
+import * as NestedError from 'nested-error-stacks';
 import { sync as isDirectory } from 'is-directory';
 import ui from './ui';
 import findAddons from './find-addons';
@@ -220,8 +221,7 @@ export default class Blueprint extends Command {
       try {
         await this.postInstall(argv);
       } catch (e) {
-        ui.error('postInstall failed:');
-        ui.error(e.stack || e);
+        throw new NestedError(`postInstall hook for ${ (<typeof Blueprint>this.constructor).blueprintName } failed`, e);
       }
     }
   }
@@ -284,8 +284,7 @@ export default class Blueprint extends Command {
       try {
         await this.postUninstall(argv);
       } catch (e) {
-        ui.error('postInstall failed:');
-        ui.error(e.stack || e);
+        throw new NestedError(`postUninstall hook for ${ (<typeof Blueprint>this.constructor).blueprintName } failed`, e);
       }
     }
   }
