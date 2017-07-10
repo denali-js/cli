@@ -38,6 +38,11 @@ export default class AppBlueprint extends Blueprint {
       defaultValue: false,
       type: <any>'boolean'
     },
+    'skip-git': {
+      description: 'Do not initialize git in the new app',
+      defaultValue: false,
+      type: <any>'boolean'
+    },
     useNpm: {
       description: 'Use npm to install dependencies, even if yarn is available',
       defaultValue: false,
@@ -72,21 +77,25 @@ export default class AppBlueprint extends Blueprint {
         ui.error(error.stack || error.message || error);
       }
     }
-    await spinner.start('Setting up git repo');
-    try {
-      await run('git init', { cwd: name, maxBuffer });
-      await run('git add .', { cwd: name, maxBuffer });
-      await run('git commit -am "Initial denali project scaffold"', { cwd: name, maxBuffer });
-      await spinner.succeed('Git repo initialized');
-    } catch (e) {
-      await spinner.fail('Unable to initialize git repo:');
-      ui.error(e.stack);
+
+    if (!argv.skipGit) {
+      await spinner.start('Setting up git repo');
+      try {
+        await run('git init', { cwd: name, maxBuffer });
+        await run('git add .', { cwd: name, maxBuffer });
+        await run('git commit -am "Initial denali project scaffold"', { cwd: name, maxBuffer });
+        await spinner.succeed('Git repo initialized');
+      } catch (e) {
+        await spinner.fail('Unable to initialize git repo:');
+        ui.error(e.stack);
+      }
     }
-    ui.info(`📦  ${ name } created!`);
+
+    ui.info(`📦  ${name} created!`);
     ui.info('');
     ui.info('To launch your application, just run:');
     ui.info('');
-    ui.info(`  $ cd ${ name } && denali server`);
+    ui.info(`  $ cd ${name} && denali server`);
     ui.info('');
   }
 

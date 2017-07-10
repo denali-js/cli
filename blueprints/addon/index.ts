@@ -38,6 +38,11 @@ export default class AddonBlueprint extends Blueprint {
       defaultValue: false,
       type: <any>'boolean'
     },
+    'skip-git': {
+      description: 'Do not initialize git in the new addon',
+      defaultValue: false,
+      type: <any>'boolean'
+    },
     'use-npm': {
       description: 'Use npm to install dependencies, even if yarn is available',
       defaultValue: false,
@@ -68,18 +73,22 @@ export default class AddonBlueprint extends Blueprint {
       }
     }
     await spinner.succeed('Dependencies installed');
-    await spinner.start('Setting up git repo');
-    try {
-      await run('git init', { cwd: name, maxBuffer });
-      await run('git add .', { cwd: name, maxBuffer });
-      await run('git commit -am "Initial denali project scaffold"', { cwd: name, maxBuffer });
-      await spinner.succeed('Git repo initialized');
-    } catch (e) {
-      await spinner.fail('Unable to initialize git repo:');
-      ui.error(e.stack);
+
+    if (!argv.skipGit) {
+      await spinner.start('Setting up git repo');
+      try {
+        await run('git init', { cwd: name, maxBuffer });
+        await run('git add .', { cwd: name, maxBuffer });
+        await run('git commit -am "Initial denali project scaffold"', { cwd: name, maxBuffer });
+        await spinner.succeed('Git repo initialized');
+      } catch (e) {
+        await spinner.fail('Unable to initialize git repo:');
+        ui.error(e.stack);
+      }
     }
+
     // tslint:disable-next-line:no-void-expression
-    await ui.info(`📦  ${ name } addon created!`);
+    await ui.info(`📦  ${name} addon created!`);
   }
 
 }
