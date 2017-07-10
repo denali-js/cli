@@ -39,7 +39,7 @@ export default class AppBlueprint extends Blueprint {
       type: <any>'boolean'
     },
     'skip-git': {
-      description: 'Do not initialize git in the new addon',
+      description: 'Do not initialize git in the new app',
       defaultValue: false,
       type: <any>'boolean'
     },
