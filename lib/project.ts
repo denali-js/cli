@@ -121,7 +121,6 @@ export default class Project {
     this.lint = options.lint;
     this.audit = options.audit;
     this.buildDummy = options.buildDummy;
-    this.pkg = require(path.join(this.dir, 'package.json'));
   }
 
   /**

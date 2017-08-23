@@ -1,6 +1,3 @@
-import {
-  cloneDeep
-} from 'lodash';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as Plugin from 'broccoli-plugin';
