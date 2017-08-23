@@ -52,7 +52,7 @@ if (!pkgPath) {
     let localCliDir = path.dirname(findup('package.json', { cwd: localCliMain }));
     let cliPkgType = fs.lstatSync(localCliDir).isSymbolicLink() ? 'linked' : 'local';
     let localCliPkg = require(path.join(localCliDir, 'package.json'));
-    process.stdout.write(`cli v${ localCliPkg.version } [${ cliPkgType }]`);
+    process.stdout.write(`cli v${ localCliPkg.version } [${ cliPkgType }] `);
     try {
       process.chdir(pkgDir);
       require(path.join(localCliDir, 'dist', 'lib', 'bootstrap')).default(pkg);
