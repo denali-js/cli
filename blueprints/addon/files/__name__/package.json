@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "scripts": {
     "build": "denali build",
-    "prepublish": "in-publish && echo \"Use 'denali publish' instead.\" && exit 1 || not-in-publish",
     "test": "denali test"
   },
   "keywords": [
@@ -18,7 +17,6 @@
     "eslint-config-denali": "^1.1.0",
     "denali": "0.0.x",
     "denali-cli": "0.0.x",
-    "in-publish": "^2.0.0",
     "lodash": "^4.16.4"
   },
   "devDependencies": {
