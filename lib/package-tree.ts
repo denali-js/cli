@@ -60,19 +60,6 @@ export default class PackageTree extends (<new(...args: any[]) => Tree>Plugin) {
         }
       });
     });
-
-    // Addons should publish their dist directories, not the root project directory. To enforce
-    // this, the addon blueprint ships with a prepublish script that fails immediately, telling the
-    // user to run `denali publish` instead (which tests the addon, builds it, then runs npm publish
-    // from the dist folder). However, `denali publish` itself would get blocked by our prepublish
-    // blocker too, so when we build an addon, we remove that blocker. But if the user has changed
-    // the prepublish script, then we leave it alone.
-    let scripts = this.builder.pkg.scripts;
-    if (scripts && scripts.prepublish && scripts.prepublish.includes("Use 'denali publish' instead.")) {
-      let pkg = cloneDeep(this.builder.pkg);
-      delete pkg.scripts.prepublish;
-      fs.writeFileSync(path.join(this.outputPath, 'package.json'), JSON.stringify(pkg, null, 2));
-    }
   }
 
 }

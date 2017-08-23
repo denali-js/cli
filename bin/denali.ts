@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'main-dir';
 import SourceMapSupport = require('source-map-support');
 import { satisfies } from 'semver';
 import * as chalk from 'chalk';
