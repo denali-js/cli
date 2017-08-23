@@ -61,11 +61,16 @@ export default function run(projectPkg?: any)  {
       ui.info(` | denali v${ addon.pkg.version } [${ denaliInstallType }]\n`);
       debug('found core denali commands');
       coreCommands = addonCommands;
+
     } else {
       debug(`found ${ keys(addonCommands).length } commands from ${ addon.pkg.name }: [ ${ keys(addonCommands).join(', ') } ] `);
       commands = Object.assign(commands, addonCommands);
     }
   });
+
+  if (!coreCommands) {
+    ui.warn('Core commands not found. If you are developing Denali itself, you need to install Denali globally.');
+  }
 
   // Core commands take precedence over others
   commands = Object.assign(commands, coreCommands);
