@@ -26,7 +26,13 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
     sort: true,
     configName: 'denali',
     keyword: 'denali-addon',
-    includeDev: true
+    includeDev: true,
+    resolvePackageFilter(pkg: { main?: string, mainDir?: string }) {
+      if (pkg.mainDir) {
+        pkg.main = pkg.main || 'index.js';
+        pkg.main = path.join(pkg.mainDir, pkg.main);
+      }
+    }
   };
 
   if (isLocal) {
