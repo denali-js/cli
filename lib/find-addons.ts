@@ -26,18 +26,14 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
     sort: true,
     configName: 'denali',
     keyword: 'denali-addon',
-    includeDev: true,
-    resolvePackageFilter(pkg: { main?: string, mainDir?: string }) {
-      if (pkg.mainDir) {
-        pkg.main = pkg.main || 'index.js';
-        pkg.main = path.join(pkg.mainDir, pkg.main);
-      }
-    }
+    includeDev: true
   };
 
   if (isLocal) {
     debug(`searching for addons locally in ${ process.cwd() }`);
-    return findPlugins(findOptions);
+    let addons = findPlugins(findOptions);
+    addMainDir(addons);
+    return addons;
   }
 
   let npmRoot = execSync('npm root -g').toString().trim();
@@ -76,6 +72,16 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
     }
   }
 
+  addMainDir(addons);
+
   return addons;
 
+}
+
+function addMainDir(addons: PluginSummary[]) {
+  addons.forEach((addon) => {
+    if (addon.pkg.mainDir) {
+      addon.dir = path.join(addon.dir, addon.pkg.mainDir);
+    }
+  });
 }

@@ -12,6 +12,8 @@ declare module "broccoli";
 declare module "broccoli-slow-trees";
 declare module "broccoli-plugin";
 declare module "broccoli-funnel";
+declare module "broccoli-stew";
+declare module "broccoli-file-creator";
 declare module "broccoli-merge-trees";
 declare module "yarn/lib/constants" {
   export const GLOBAL_MODULE_DIRECTORY: string;

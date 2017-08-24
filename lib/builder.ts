@@ -5,8 +5,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as Funnel from 'broccoli-funnel';
 import * as MergeTree from 'broccoli-merge-trees';
+// import * as writeFile from 'broccoli-file-creator';
 import PackageTree from './package-tree';
+import EjectTree from './eject-tree';
 import Project from './project';
+import ui from './ui';
 import * as createDebug from 'debug';
 import findPlugins, { PluginSummary } from 'find-plugins';
 
@@ -15,6 +18,10 @@ const debug = createDebug('denali-cli:builder');
 // Because it's nice to have a named type for this
 // tslint:disable-next-line:no-empty-interface
 export interface Tree {}
+
+export interface TreeForMethod {
+  (dir: string): string | Tree;
+}
 
 /**
  * The Builder class is responsible for taking a Denali package (an app or an addon), and performing
@@ -32,8 +39,6 @@ export interface Tree {}
  * @module denali-cli
  */
 export default class Builder {
-
-  [key: string]: any;
 
   /**
    * An internal cache that maps real disk locations to Builder instances. This lets us accurately
@@ -88,14 +93,7 @@ export default class Builder {
   /**
    * A list of files that should be copied as-is into the final build
    */
-  public packageFiles: string[] = [
-    'package.json',
-    'README.md',
-    'CHANGELOG.md',
-    'LICENSE',
-    'denali-build.js',
-    'yarn.lock'
-  ];
+  public packageFiles: string[] = [];
 
   /**
    * A list of directories that should be copied as-is into the final build
@@ -152,6 +150,12 @@ export default class Builder {
   public processSelf: (tree: Tree, dir: string) => Tree;
 
   /**
+   * Cached instance of build tree. We cache this in case the same builder gets toTree() invoked
+   * more than once, due to appearring in child addons multiple times.
+   */
+  public tree: Tree;
+
+  /**
    * Creates an instance of Builder for the given directory, as a child of the given Project. If
    * preseededAddons are supplied, they will be included as child addons of this Builder instance.
    */
@@ -174,34 +178,74 @@ export default class Builder {
    * Return a single broccoli tree that represents the completed build output for this package
    */
   public toTree(): Tree {
-    let tree = this._prepareSelf();
+    if (!this.tree) {
+      let tree = this._prepareSelf();
 
-    // Find child addons
-    this.childBuilders = this.addons.map((addon) => Builder.createFor(addon.dir, this.project));
+      // Find child addons
+      this.childBuilders = this.addons.map((addon) => Builder.createFor(addon.dir, this.project));
 
-    // Run processParent hooks
-    this.childBuilders.forEach((builder) => {
-      if (builder.processParent) {
-        tree = builder.processParent(tree, this.dir);
+      let childTrees: Tree[] = [];
+      this.childBuilders.forEach((builder) => {
+        if (!builder.needsCompile()) {
+          childTrees.push(this.compileChildBuilder(builder));
+        }
+
+        // Run processParent hooks
+        if (builder.processParent) {
+          tree = builder.processParent(tree, this.dir);
+        }
+      });
+      let combinedChildTree = new MergeTree(childTrees);
+      tree = new MergeTree([ combinedChildTree, tree ], { overwrite: true });
+
+      // Run processSelf hooks
+      if (this.processSelf) {
+        tree = this.processSelf(tree, this.dir);
       }
-    });
 
-    // Run processSelf hooks
-    if (this.processSelf) {
-      tree = this.processSelf(tree, this.dir);
+      let unbuiltTrees: Tree[] = [];
+      this.packageDirs.forEach((dir) => {
+        if (fs.existsSync(path.join(this.dir, dir))) {
+          unbuiltTrees.push(new Funnel(path.join(this.dir, dir), { destDir: dir }));
+        }
+      });
+      if (unbuiltTrees.length > 0) {
+        tree = new MergeTree(unbuiltTrees.concat(tree), { overwrite: true });
+      }
+
+      this.tree = tree;
     }
 
-    let unbuiltTrees: Tree[] = [];
-    this.packageDirs.forEach((dir) => {
-      if (fs.existsSync(path.join(this.dir, dir))) {
-        unbuiltTrees.push(new Funnel(path.join(this.dir, dir), { destDir: dir }));
-      }
-    });
-    if (unbuiltTrees.length > 0) {
-      tree = new MergeTree(unbuiltTrees.concat(tree), { overwrite: true });
-    }
+    return this.tree;
+  }
 
-    return tree;
+  /**
+   * Checks if the this package is precompiled. You can override this to force on-the-fly
+   * compliation of this addon, but this is generally *not* recommended.
+   */
+  public needsCompile(): boolean {
+    return this.isDevelopingAddon
+           // is symlinked into the project? (only works for top-level deps)
+           || fs.statSync(path.join(this.project.dir, 'node_modules', this.pkg.name)).isSymbolicLink()
+           // is missing compiled output?
+           || !fs.existsSync(path.join(this.dir, 'dist'));
+  }
+
+  /**
+   * Takes a builder instance for a child addon that isn't precompiled and
+   * build it into the special `__child_addons__` folder in our output. We also
+   * write the original location of the addon to a file in output, so we can
+   * later move the compiled output to the original source location once the
+   * broccoli build finishes.
+   */
+  protected compileChildBuilder(builder: Builder): Tree {
+    let name = builder.pkg.name;
+    if (!builder.tree) {
+      ui.info(`Compiling ${ name } on the fly ...`);
+    }
+    let childTree = builder.toTree();
+    // TODO: pull default build output directory from builder instance itself rather than hardcoding dist here
+    return new EjectTree(childTree, path.join(builder.dir, 'dist'));
   }
 
   /**
@@ -237,7 +281,7 @@ export default class Builder {
     // Give any subclasses a chance to override the source directories by defining
     // a treeFor* method
     let sourceTrees = dirs.map((dir) => {
-      let treeFor = this[`treeFor${ upperFirst(dir) }`] || this.treeFor;
+      let treeFor = <TreeForMethod>(<any>this)[`treeFor${ upperFirst(dir) }`] || this.treeFor;
       let tree = treeFor.call(this, path.join(this.dir, dir));
       if (typeof tree !== 'string' || fs.existsSync(tree)) {
         return new Funnel(tree, { annotation: dir, destDir: dir });

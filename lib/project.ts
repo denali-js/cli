@@ -305,23 +305,45 @@ export default class Project {
    * After a build completes, this method cleans up the result. It copies the results out of tmp and
    * into the output directory, and kicks off any optional behaviors post-build.
    */
-  protected finishBuild(results: { directory: string, graph: any }, outputDir: string) {
-    // Copy the result out of broccoli tmp
-    if (!path.isAbsolute(outputDir)) {
-      outputDir = path.join(process.cwd(), outputDir);
-    }
-    rimraf.sync(outputDir);
-    copyDereferenceSync(results.directory, outputDir);
+  protected finishBuild(results: { directory: string, graph: any }, destDir: string) {
+    this.copyBuildOutput(results.directory, destDir);
 
-    // Print slow build trees
     if (this.printSlowTrees) {
       printSlowNodes(results.graph);
     }
 
-    // Run an nsp audit on the package
     if (this.audit) {
       this.auditPackage();
     }
+  }
+
+  /**
+   * Copy the build results into their final destinations. If child addons were built with this project,
+   * they will be copied back to their output folders in their original locations. The project itself
+   * will be copied to the output directory specified.
+   */
+  protected copyBuildOutput(buildResultDir: string, destDir: string): void {
+    if (!path.isAbsolute(buildResultDir)) {
+      buildResultDir = path.resolve(buildResultDir);
+    }
+
+    // Go through each of the child addons that were built with this project and copy their
+    // output into their respective source outputs
+    let builtChildAddons = path.join(buildResultDir, '__child_addons__');
+    if (fs.existsSync(builtChildAddons)) {
+      fs.readdirSync(builtChildAddons).forEach((childAddon) => {
+        let childAddonSrcDir = path.join(buildResultDir, '__child_addons__', childAddon);
+        let childAddonDestDir = fs.readFileSync(path.join(childAddonSrcDir, '__original_location__'), 'utf-8');
+        rimraf.sync(childAddonDestDir);
+        copyDereferenceSync(childAddonSrcDir, childAddonDestDir);
+        rimraf.sync(path.join(childAddonDestDir, '__original_location__'));
+      });
+    }
+
+    // Copy the main output out, removing the __child_addons__ special folder
+    rimraf.sync(destDir);
+    copyDereferenceSync(buildResultDir, destDir);
+    // rimraf.sync(path.join(destDir, '__child_addons__'));
   }
 
   /**
