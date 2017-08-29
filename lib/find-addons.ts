@@ -32,7 +32,6 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
   if (isLocal) {
     debug(`searching for addons locally in ${ process.cwd() }`);
     let addons = findPlugins(findOptions);
-    addMainDir(addons);
     return addons;
   }
 
@@ -72,16 +71,6 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
     }
   }
 
-  addMainDir(addons);
-
   return addons;
 
-}
-
-function addMainDir(addons: PluginSummary[]) {
-  addons.forEach((addon) => {
-    if (addon.pkg.mainDir) {
-      addon.dir = path.join(addon.dir, addon.pkg.mainDir);
-    }
-  });
 }

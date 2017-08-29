@@ -1,10 +1,10 @@
 import {
   noop,
-  after,
+  // after,
   dropWhile,
   takeWhile
 } from 'lodash';
-import * as fs from 'fs';
+// import * as fs from 'fs';
 import * as path from 'path';
 import dedent from 'dedent-js';
 import * as nsp from 'nsp';
@@ -24,7 +24,7 @@ import Watcher from './watcher';
 import ui from './ui';
 import spinner from './spinner';
 import startTimer from './timer';
-import { each } from 'bluebird';
+// import { each } from 'bluebird';
 
 const debug = createDebug('denali-cli:project');
 
@@ -213,29 +213,29 @@ export default class Project {
     options.onBuild = options.onBuild || noop;
     // Start watcher
     let timer = startTimer();
-    let { broccoliBuilder, builder } = this.getBuilderAndTree();
+    let { broccoliBuilder } = this.getBuilderAndTree();
     await spinner.start(`Building ${ this.pkg.name }`, this.pkg.name);
     let watcher = new Watcher(broccoliBuilder, { beforeRebuild: options.beforeRebuild, interval: 100 });
 
-    // Watch/build any child addons under development
-    let inDevelopmentAddons = builder.childBuilders.filter((childBuilder) => {
-      return childBuilder.isDevelopingAddon && fs.lstatSync(childBuilder.dir).isSymbolicLink();
-    });
-    // Don't finalize the first build until all the in-dev addons have built too
-    options.onBuild = after(inDevelopmentAddons.length + 1, options.onBuild);
-    // Build the in-dev child addons
-    each(inDevelopmentAddons, async (childBuilder) => {
-      let addonDist = fs.realpathSync(childBuilder.dir);
-      debug(`"${ childBuilder.pkg.name }" (${ addonDist }) addon is under development, creating a project to watch & compile it`);
-      let addonPackageDir = path.dirname(addonDist);
-      let addonProject = new Project({
-        environment: this.environment,
-        dir: addonPackageDir,
-        lint: this.lint,
-        audit: this.audit
-      });
-      return addonProject.watch({ onBuild: options.onBuild, outputDir: addonDist });
-    });
+    // // Watch/build any child addons under development
+    // let inDevelopmentAddons = builder.childBuilders.filter((childBuilder) => {
+    //   return childBuilder.isDevelopingAddon && fs.lstatSync(childBuilder.distDir).isSymbolicLink();
+    // });
+    // // Don't finalize the first build until all the in-dev addons have built too
+    // options.onBuild = after(inDevelopmentAddons.length + 1, options.onBuild);
+    // // Build the in-dev child addons
+    // each(inDevelopmentAddons, async (childBuilder) => {
+    //   let addonDist = fs.realpathSync(childBuilder.distDir);
+    //   debug(`"${ childBuilder.pkg.name }" (${ addonDist }) addon is under development, creating a project to watch & compile it`);
+    //   let addonPackageDir = path.dirname(addonDist);
+    //   let addonProject = new Project({
+    //     environment: this.environment,
+    //     dir: addonPackageDir,
+    //     lint: this.lint,
+    //     audit: this.audit
+    //   });
+    //   return addonProject.watch({ onBuild: options.onBuild, outputDir: addonDist });
+    // });
 
     let spinnerStart: Promise<void>;
 
@@ -317,33 +317,13 @@ export default class Project {
     }
   }
 
-  /**
-   * Copy the build results into their final destinations. If child addons were built with this project,
-   * they will be copied back to their output folders in their original locations. The project itself
-   * will be copied to the output directory specified.
-   */
   protected copyBuildOutput(buildResultDir: string, destDir: string): void {
     if (!path.isAbsolute(buildResultDir)) {
       buildResultDir = path.resolve(buildResultDir);
     }
 
-    // Go through each of the child addons that were built with this project and copy their
-    // output into their respective source outputs
-    let builtChildAddons = path.join(buildResultDir, '__child_addons__');
-    if (fs.existsSync(builtChildAddons)) {
-      fs.readdirSync(builtChildAddons).forEach((childAddon) => {
-        let childAddonSrcDir = path.join(buildResultDir, '__child_addons__', childAddon);
-        let childAddonDestDir = fs.readFileSync(path.join(childAddonSrcDir, '__original_location__'), 'utf-8');
-        rimraf.sync(childAddonDestDir);
-        copyDereferenceSync(childAddonSrcDir, childAddonDestDir);
-        rimraf.sync(path.join(childAddonDestDir, '__original_location__'));
-      });
-    }
-
-    // Copy the main output out, removing the __child_addons__ special folder
     rimraf.sync(destDir);
     copyDereferenceSync(buildResultDir, destDir);
-    // rimraf.sync(path.join(destDir, '__child_addons__'));
   }
 
   /**

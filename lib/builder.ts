@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as Funnel from 'broccoli-funnel';
 import * as MergeTree from 'broccoli-merge-trees';
+import { sync as readPkg } from 'read-pkg';
 // import * as writeFile from 'broccoli-file-creator';
 import PackageTree from './package-tree';
 import EjectTree from './eject-tree';
@@ -12,6 +13,7 @@ import Project from './project';
 import ui from './ui';
 import * as createDebug from 'debug';
 import findPlugins, { PluginSummary } from 'find-plugins';
+// import { sync as readPkgUp } from 'read-pkg-up';
 
 const debug = createDebug('denali-cli:builder');
 
@@ -101,9 +103,14 @@ export default class Builder {
   public packageDirs: string[] = [];
 
   /**
-   * The directory containing the package that should be built.
+   * The dist directory potentially containing the compiled package that should be built.
    */
-  public dir: string;
+  public distDir: string;
+
+  /**
+   * The directory containing the package to be built.
+   */
+  public pkgDir: string;
 
   /**
    * The package.json for this package
@@ -124,14 +131,6 @@ export default class Builder {
    * An array of builder instances for child addons of this package
    */
   public childBuilders: Builder[];
-
-  /**
-   * If true, when the root Project is built, it will create a child Project for this package,
-   * which will watch for changes and trigger a rebuild of this package as well as the root Project.
-   *
-   * Warning: experimental and highly unstable
-   */
-  public isDevelopingAddon = false;
 
   /**
    * Modify the build of the parent package that is consuming this addon.
@@ -159,13 +158,15 @@ export default class Builder {
    * Creates an instance of Builder for the given directory, as a child of the given Project. If
    * preseededAddons are supplied, they will be included as child addons of this Builder instance.
    */
-  constructor(dir: string, project: Project, preseededAddons?: string[]) {
-    debug(`creating builder for ./${ path.relative(project.dir, dir) }`);
-    this.dir = dir;
-    this.pkg = require(path.join(this.dir, 'package.json'));
+  constructor(pkgDir: string, project: Project, preseededAddons?: string[]) {
+    debug(`creating builder for ./${ path.relative(project.dir, pkgDir) }`);
+    this.pkgDir = pkgDir;
+    console.log(pkgDir)
+    this.pkg = readPkg(pkgDir);
+    this.distDir = this.pkg.mainDir ? path.join(this.pkgDir, this.pkg.mainDir) : this.pkgDir;
     this.project = project;
     this.addons = findPlugins({
-      dir: this.dir,
+      dir: this.distDir,
       keyword: 'denali-addon',
       sort: true,
       includeDev: true,
@@ -173,6 +174,12 @@ export default class Builder {
       include: preseededAddons
     });
   }
+
+  /**
+   * If true, when the root Project is built, it will create a child Project for this package,
+   * which will watch for changes and trigger a rebuild of this package as well as the root Project.
+   */
+  public isDevelopingAddon() { return false; } // tslint:disable-line
 
   /**
    * Return a single broccoli tree that represents the completed build output for this package
@@ -186,13 +193,17 @@ export default class Builder {
 
       let childTrees: Tree[] = [];
       this.childBuilders.forEach((builder) => {
-        if (!builder.needsCompile()) {
+        if (builder.needsCompile()) {
+          debug(`adding child build tree for ${ builder.pkg.name } to compile on-the-fly`);
+          // TODO these aren't caching properly, not being reused
           childTrees.push(this.compileChildBuilder(builder));
+        } else {
+          debug(`${ builder.pkg.name } is precompiled, using that`);
         }
 
         // Run processParent hooks
         if (builder.processParent) {
-          tree = builder.processParent(tree, this.dir);
+          tree = builder.processParent(tree, this.pkgDir);
         }
       });
       let combinedChildTree = new MergeTree(childTrees);
@@ -200,13 +211,13 @@ export default class Builder {
 
       // Run processSelf hooks
       if (this.processSelf) {
-        tree = this.processSelf(tree, this.dir);
+        tree = this.processSelf(tree, this.pkgDir);
       }
 
       let unbuiltTrees: Tree[] = [];
       this.packageDirs.forEach((dir) => {
-        if (fs.existsSync(path.join(this.dir, dir))) {
-          unbuiltTrees.push(new Funnel(path.join(this.dir, dir), { destDir: dir }));
+        if (fs.existsSync(path.join(this.pkgDir, dir))) {
+          unbuiltTrees.push(new Funnel(path.join(this.pkgDir, dir), { destDir: dir }));
         }
       });
       if (unbuiltTrees.length > 0) {
@@ -224,11 +235,14 @@ export default class Builder {
    * compliation of this addon, but this is generally *not* recommended.
    */
   public needsCompile(): boolean {
-    return this.isDevelopingAddon
-           // is symlinked into the project? (only works for top-level deps)
-           || fs.statSync(path.join(this.project.dir, 'node_modules', this.pkg.name)).isSymbolicLink()
-           // is missing compiled output?
-           || !fs.existsSync(path.join(this.dir, 'dist'));
+    let isDeveloping = this.isDevelopingAddon();
+    let isSymlinkedNodeModule = false;
+    try {
+      isSymlinkedNodeModule = fs.lstatSync(path.join(this.project.dir, 'node_modules', this.pkg.name)).isSymbolicLink();
+    } catch (e) { /* file might not exist at all */ }
+    let isMissingCompiledOutput = !fs.existsSync(this.distDir);
+
+    return isDeveloping || isSymlinkedNodeModule || isMissingCompiledOutput;
   }
 
   /**
@@ -244,8 +258,7 @@ export default class Builder {
       ui.info(`Compiling ${ name } on the fly ...`);
     }
     let childTree = builder.toTree();
-    // TODO: pull default build output directory from builder instance itself rather than hardcoding dist here
-    return new EjectTree(childTree, path.join(builder.dir, 'dist'));
+    return new EjectTree(childTree, builder.distDir);
   }
 
   /**
@@ -282,7 +295,7 @@ export default class Builder {
     // a treeFor* method
     let sourceTrees = dirs.map((dir) => {
       let treeFor = <TreeForMethod>(<any>this)[`treeFor${ upperFirst(dir) }`] || this.treeFor;
-      let tree = treeFor.call(this, path.join(this.dir, dir));
+      let tree = treeFor.call(this, path.join(this.pkgDir, dir));
       if (typeof tree !== 'string' || fs.existsSync(tree)) {
         return new Funnel(tree, { annotation: dir, destDir: dir });
       }

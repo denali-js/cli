@@ -38,7 +38,7 @@ export default class PackageTree extends (<new(...args: any[]) => Tree>Plugin) {
   constructor(builder: Builder, options: { files: string[] }) {
     super([], options);
     this.builder = builder;
-    this.dir = builder.dir;
+    this.dir = builder.pkgDir;
     this.files = options.files;
   }
 
