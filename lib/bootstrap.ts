@@ -49,7 +49,7 @@ export default function run(projectPkg?: any)  {
   `);
 
   addons.forEach((addon) => {
-    let addonCommands = discoverCommands(commands, addon.pkg.name, path.join(addon.dir, 'commands'));
+    let addonCommands = discoverCommands(commands, addon.pkg.name, path.join(addon.distDir, 'commands'));
 
     if (addon.pkg.name === 'denali') {
       debug('found core denali commands');

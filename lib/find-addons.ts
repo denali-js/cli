@@ -11,6 +11,9 @@ import * as createDebug from 'debug';
 
 const debug = createDebug('denali-cli:find-addons');
 
+export interface AddonSummary extends PluginSummary {
+  distDir?: string;
+}
 
 /**
  * Discover any addons for the current directory. If the current directory is a Denali project, load
@@ -20,7 +23,7 @@ const debug = createDebug('denali-cli:find-addons');
  * folder (both yarn and npm are supported), and scan all the global packages for addon (rather than
  * relying on a package.json guide).
  */
-export default function findAddons(isLocal: boolean): PluginSummary[] {
+export default function findAddons(isLocal: boolean): AddonSummary[] {
 
   let findOptions = {
     sort: true,
@@ -32,6 +35,7 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
   if (isLocal) {
     debug(`searching for addons locally in ${ process.cwd() }`);
     let addons = findPlugins(findOptions);
+    addMainDir(addons);
     debug(`found ${ addons.length } addons: ${ addons.map((addon) => addon.pkg.name).join(', ') }`);
     return addons;
   }
@@ -72,7 +76,16 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
     }
   }
 
+  addMainDir(addons);
   debug(`found ${ addons.length } addons: ${ addons.map((addon) => addon.pkg.name).join(', ') }`);
   return addons;
 
+}
+
+function addMainDir(addons: AddonSummary[]) {
+  addons.forEach((addon) => {
+    if (addon.pkg.mainDir) {
+      addon.distDir = path.join(addon.dir, addon.pkg.mainDir);
+    }
+  })
 }
