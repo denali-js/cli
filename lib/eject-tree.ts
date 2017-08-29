@@ -2,6 +2,9 @@ import * as Plugin from 'broccoli-plugin';
 import { Tree } from './builder';
 import * as rimraf from 'rimraf';
 import { sync as copyDereferenceSync } from 'copy-dereference';
+import * as createDebug from 'debug';
+
+const debug = createDebug('denali-cli:eject-tree');
 
 /**
  * Denali CLI's build system is based on Broccoli, which, while quite powerful for our use case, has
@@ -30,6 +33,7 @@ export default class PackageTree extends (<new(...args: any[]) => Tree>Plugin) {
    * the rest of the build finishes
    */
   public build(): void {
+    debug(`ejecting child addon build result to ${ this.destDir }`);
     rimraf.sync(this.destDir);
     copyDereferenceSync(this.inputPaths[0], this.destDir);
   }

@@ -32,6 +32,7 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
   if (isLocal) {
     debug(`searching for addons locally in ${ process.cwd() }`);
     let addons = findPlugins(findOptions);
+    debug(`found ${ addons.length } addons: ${ addons.map((addon) => addon.pkg.name).join(', ') }`);
     return addons;
   }
 
@@ -71,6 +72,7 @@ export default function findAddons(isLocal: boolean): PluginSummary[] {
     }
   }
 
+  debug(`found ${ addons.length } addons: ${ addons.map((addon) => addon.pkg.name).join(', ') }`);
   return addons;
 
 }

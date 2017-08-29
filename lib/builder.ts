@@ -6,14 +6,11 @@ import * as path from 'path';
 import * as Funnel from 'broccoli-funnel';
 import * as MergeTree from 'broccoli-merge-trees';
 import { sync as readPkg } from 'read-pkg';
-// import * as writeFile from 'broccoli-file-creator';
 import PackageTree from './package-tree';
 import EjectTree from './eject-tree';
 import Project from './project';
-import ui from './ui';
 import * as createDebug from 'debug';
 import findPlugins, { PluginSummary } from 'find-plugins';
-// import { sync as readPkgUp } from 'read-pkg-up';
 
 const debug = createDebug('denali-cli:builder');
 
@@ -159,9 +156,10 @@ export default class Builder {
    * preseededAddons are supplied, they will be included as child addons of this Builder instance.
    */
   constructor(pkgDir: string, project: Project, preseededAddons?: string[]) {
-    debug(`creating builder for ./${ path.relative(project.dir, pkgDir) }`);
+    let relativeBuilderPath = path.relative(project.dir, pkgDir);
+    debug(`creating builder for ${ relativeBuilderPath === '' ? 'project root' : relativeBuilderPath }`);
+
     this.pkgDir = pkgDir;
-    console.log(pkgDir)
     this.pkg = readPkg(pkgDir);
     this.distDir = this.pkg.mainDir ? path.join(this.pkgDir, this.pkg.mainDir) : this.pkgDir;
     this.project = project;
@@ -194,7 +192,7 @@ export default class Builder {
       let childTrees: Tree[] = [];
       this.childBuilders.forEach((builder) => {
         if (builder.needsCompile()) {
-          debug(`adding child build tree for ${ builder.pkg.name } to compile on-the-fly`);
+          debug(`adding ${ builder.pkg.name } to build queue for on-the-fly compilation`);
           // TODO these aren't caching properly, not being reused
           childTrees.push(this.compileChildBuilder(builder));
         } else {
@@ -253,10 +251,6 @@ export default class Builder {
    * broccoli build finishes.
    */
   protected compileChildBuilder(builder: Builder): Tree {
-    let name = builder.pkg.name;
-    if (!builder.tree) {
-      ui.info(`Compiling ${ name } on the fly ...`);
-    }
     let childTree = builder.toTree();
     return new EjectTree(childTree, builder.distDir);
   }
@@ -308,6 +302,15 @@ export default class Builder {
 
     // Combine everything into our unified source tree, ready for building
     return new MergeTree(sourceTrees, { overwrite: true });
+  }
+
+  public buildDescription(): string {
+    let activeChildBuilders = this.childBuilders.filter((builder) => builder.tree);
+    let description = this.pkg.name;
+    if (activeChildBuilders.length > 0) {
+      description += ` (including ${ activeChildBuilders.map((b) => b.pkg.name).join(', ') } on the fly)`;
+    }
+    return description;
   }
 
 }

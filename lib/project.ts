@@ -1,10 +1,8 @@
 import {
   noop,
-  // after,
   dropWhile,
   takeWhile
 } from 'lodash';
-// import * as fs from 'fs';
 import * as path from 'path';
 import dedent from 'dedent-js';
 import * as nsp from 'nsp';
@@ -24,7 +22,6 @@ import Watcher from './watcher';
 import ui from './ui';
 import spinner from './spinner';
 import startTimer from './timer';
-// import { each } from 'bluebird';
 
 const debug = createDebug('denali-cli:project');
 
@@ -184,8 +181,8 @@ export default class Project {
    */
   public async build(outputDir: string = 'dist'): Promise<string> {
     debug('building project');
-    let { broccoliBuilder } = this.getBuilderAndTree();
-    await spinner.start(`Building ${ this.pkg.name }`);
+    let { broccoliBuilder, builder } = this.getBuilderAndTree();
+    await spinner.start(`Building ${ builder.buildDescription() }`);
     let timer = startTimer();
     try {
       let results = await broccoliBuilder.build();
@@ -213,29 +210,9 @@ export default class Project {
     options.onBuild = options.onBuild || noop;
     // Start watcher
     let timer = startTimer();
-    let { broccoliBuilder } = this.getBuilderAndTree();
-    await spinner.start(`Building ${ this.pkg.name }`, this.pkg.name);
+    let { broccoliBuilder, builder } = this.getBuilderAndTree();
+    await spinner.start(`Building ${ builder.buildDescription() }`);
     let watcher = new Watcher(broccoliBuilder, { beforeRebuild: options.beforeRebuild, interval: 100 });
-
-    // // Watch/build any child addons under development
-    // let inDevelopmentAddons = builder.childBuilders.filter((childBuilder) => {
-    //   return childBuilder.isDevelopingAddon && fs.lstatSync(childBuilder.distDir).isSymbolicLink();
-    // });
-    // // Don't finalize the first build until all the in-dev addons have built too
-    // options.onBuild = after(inDevelopmentAddons.length + 1, options.onBuild);
-    // // Build the in-dev child addons
-    // each(inDevelopmentAddons, async (childBuilder) => {
-    //   let addonDist = fs.realpathSync(childBuilder.distDir);
-    //   debug(`"${ childBuilder.pkg.name }" (${ addonDist }) addon is under development, creating a project to watch & compile it`);
-    //   let addonPackageDir = path.dirname(addonDist);
-    //   let addonProject = new Project({
-    //     environment: this.environment,
-    //     dir: addonPackageDir,
-    //     lint: this.lint,
-    //     audit: this.audit
-    //   });
-    //   return addonProject.watch({ onBuild: options.onBuild, outputDir: addonDist });
-    // });
 
     let spinnerStart: Promise<void>;
 

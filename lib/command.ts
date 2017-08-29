@@ -73,7 +73,6 @@ abstract class Command {
    *                constructor; useful for blueprints to pass additional, static data
    */
   public static async _run(argv: any): Promise<void> {
-    debug(`enforcing runsInApp setting (${ this.runsInApp })`);
     if (argv.projectPkg && this.runsInApp === false) {
       ui.error('This command can only be run outside an existing Denali project.');
       return;
@@ -83,7 +82,7 @@ abstract class Command {
       return;
     }
     let command: Command = new (<any>this)();
-    debug('running command');
+    debug(`invoking '${ this.commandName }' command`);
     try {
       await command.run(argv);
     } catch (e) {
@@ -106,7 +105,7 @@ abstract class Command {
       aliases: this.aliases.concat(abbreviations),
       describe: this.description,
       builder: (commandArgs: Yargs) => {
-        debug(`building options for ${ commandName }`);
+        debug(`building options for '${ commandName }' command`);
         commandArgs = this.configureOptions(commandName, commandArgs, projectPkg);
         if (this.configureSubcommands) {
           commandArgs = this.configureSubcommands(commandName, commandArgs, projectPkg);
