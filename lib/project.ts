@@ -182,16 +182,16 @@ export default class Project {
   public async build(outputDir: string = 'dist'): Promise<string> {
     debug('building project');
     let { broccoliBuilder, builder } = this.getBuilderAndTree();
-    await spinner.start(`Building ${ builder.buildDescription() }`);
+    spinner.start(`Building ${ builder.buildDescription() }`);
     let timer = startTimer();
     try {
       let results = await broccoliBuilder.build();
       debug('broccoli build finished');
       this.finishBuild(results, outputDir);
       debug('build finalized');
-      await spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
+      spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
     } catch (err) {
-      await spinner.fail('Build failed');
+      spinner.fail('Build failed');
       if (err.file) {
         throw new NestedError(`Build failed on file: ${ err.file }`, err);
       }
@@ -211,29 +211,23 @@ export default class Project {
     // Start watcher
     let timer = startTimer();
     let { broccoliBuilder, builder } = this.getBuilderAndTree();
-    await spinner.start(`Building ${ builder.buildDescription() }`);
+    spinner.start(`Building ${ builder.buildDescription() }`);
     let watcher = new Watcher(broccoliBuilder, { beforeRebuild: options.beforeRebuild, interval: 100 });
-
-    let spinnerStart: Promise<void>;
 
     // Handle watcher events
     watcher.on('buildstart', async () => {
       debug('changes detected, rebuilding');
       timer = startTimer();
-      spinnerStart = spinner.start(`Building ${ this.pkg.name }`, this.pkg.name);
-      await spinnerStart;
+      spinner.start(`Building ${ this.pkg.name }`, this.pkg.name);
     });
     watcher.on('change', async (results: { directory: string, graph: any }) => {
       debug('rebuild finished, wrapping up');
       this.finishBuild(results, options.outputDir);
-      await spinnerStart;
-      await spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`, this.pkg.name);
-      spinnerStart = null;
+      spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`, this.pkg.name);
       options.onBuild(this);
     });
     watcher.on('error', async (error: any) => {
-      await spinnerStart;
-      await spinner.fail('Build failed', this.pkg.name);
+      spinner.fail('Build failed', this.pkg.name);
       if (error.file) {
         if (error.line && error.column) {
           ui.error(`File: ${ error.treeDir }/${ error.file }:${ error.line }:${ error.column }`);

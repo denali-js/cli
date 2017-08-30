@@ -1,92 +1,63 @@
-import { fork, ChildProcess } from 'child_process';
+import { fork } from 'child_process';
 import * as path from 'path';
+import { Socket } from 'net';
 
-let childSpinner: ChildProcess;
-
-// Each operation issued to the child spinner process gets a UID so we can pair acknowledgements
-// with their issuing operation.
-let uid = 0;
-
-/**
- * Start the spinner process. Returns a promise that resolves once the spinner process is up and
- * ready to recieve commands. Rejects if the process fails to start up within 5s (mostly as a
- * fail-safe to avoid hanging the program if there's a bug).
- */
-async function startChildSpinner() {
-  await new Promise<void>((resolve, reject) => {
-    let fallback = setTimeout(() => {
-      reject('Spinner process failed to startup on time');
-    }, 4000);
-    childSpinner = fork(path.join(__dirname, 'spinner-child.js'));
-    childSpinner.send({ operation: 'hello' });
-    childSpinner.once('message', () => {
-      clearTimeout(fallback);
-      resolve();
-    });
-  });
-}
-
-/**
- * Send the operation to the child spinner process. If it's not running, fork a new one. Returns a
- * promise that resolves only once the child spinner process as confirmed the operation ran.
- */
-async function run(operation: string, ...args: any[]): Promise<void> {
-  if (!childSpinner || !childSpinner.connected) {
-    await startChildSpinner();
-  }
-  await new Promise<void>((resolve, reject) => {
-    let fallback = setTimeout(() => {
-      reject(new Error(`Spinner process failed to acknowledge a command on time: ${ operation }(${ args.join(', ') })`));
-    }, 4000);
-    let id = uid++;
-    childSpinner.send({ operation, args, id });
-    childSpinner.on('message', receiveAck);
-    // Wait to resolve the parent promise until we get an ack from the child process.
-    // tslint:disable-next-line:completed-docs
-    function receiveAck(data: { finished?: boolean, ackId: number }) {
-      if (data.ackId === id) {
-        clearTimeout(fallback);
-        childSpinner.removeListener('message', receiveAck);
-        if (data.finished) {
-          // If the child says it's done, then don't resolve till it fully exits.
-          childSpinner.on('close', () => {
-            resolve();
-          });
-        } else {
-          clearTimeout(fallback);
-          resolve();
-        }
-      }
-    }
-  });
-}
+let childSpinner = fork(path.join(__dirname, 'spinner-child.js'));
+childSpinner.unref();
+let childChannel = <Socket>(<any>childSpinner).channel;
+childChannel.unref();
 
 export default {
   /**
    * Start the spinner with the given message
    */
-  async start(msg: string, id?: string) {
-    await run('start', msg, id);
+  start(msg: string, id?: string) {
+    queue('start', msg, id);
   },
   /**
    * Stop the spinner, replace the spinner graphic with a checkmark, optionally update the message,
    * and turn it green.
    */
-  async succeed(msg?: string, id?: string) {
-    await run('succeed', msg, id);
+  succeed(msg?: string, id?: string) {
+    queue('succeed', msg, id);
   },
   /**
    * Stop the spinner, replace the spinner graphic with an X, optionally update the message, and
    * turn it red.
    */
-  async fail(msg?: string, id?: string) {
-    await run('fail', msg, id);
+  fail(msg?: string, id?: string) {
+    queue('fail', msg, id);
   },
   /**
    * Stop the spinner, replace the spinner graphic with the supplied symbol and message with the
    * supplied text.
    */
-  async finish(symbol: string, text: string, id?: string) {
-    await run('finish', symbol, text, id);
+  finish(symbol: string, text: string, id?: string) {
+    queue('finish', symbol, text, id);
   }
 };
+
+let operationsQueue: { operation: string, args: any[] }[] = [];
+let inFlight = false;
+
+function queue(operation: string, ...args: any[]): void {
+  operationsQueue.push({ operation, args });
+  flushQueue();
+}
+
+function flushQueue() {
+  if (inFlight) {
+    return;
+  }
+  if (operationsQueue.length > 0) {
+    inFlight = true;
+    let nextOperation = operationsQueue.shift();
+    childChannel.ref();
+    childSpinner.send(nextOperation);
+    childSpinner.once('message', () => {
+      childChannel.unref();
+      inFlight = false;
+      flushQueue();
+    });
+  }
+}
