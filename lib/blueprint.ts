@@ -10,7 +10,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { execSync, ExecSyncOptions } from 'child_process';
 import { sync as commandExists } from 'command-exists';
-import * as assert from 'assert';
 import * as chalk from 'chalk';
 import * as walk from 'walk-sync';
 import * as codeshift from 'jscodeshift';
@@ -23,7 +22,6 @@ import ui from './ui';
 import findAddons from './find-addons';
 import Command from './command';
 import * as createDebug from 'debug';
-import * as tryRequire from 'try-require';
 
 const debug = createDebug('denali-cli:blueprint');
 // tslint:disable-next-line:completed-docs
@@ -124,8 +122,12 @@ export default class Blueprint extends Command {
     let Blueprints = fs.readdirSync(dir)
       .filter((dirname) => isDirectory(path.join(dir, dirname)))
       .reduce<{ [key: string]: typeof Blueprint }>((BlueprintsSoFar, dirname: string) => {
-        let BlueprintClass = tryRequire(path.join(dir, dirname));
-        assert(BlueprintClass, `Unable to load blueprint from ${ path.join(dir, dirname) }`);
+        let BlueprintClass;
+        try {
+          BlueprintClass = require(path.join(dir, dirname));
+        } catch (e) {
+          throw new NestedError(`Unable to load blueprint from ${ dir } -> ${ dirname }`, e);
+        }
         BlueprintClass.addon = addonName;
         BlueprintsSoFar[dirname] = BlueprintClass.default || BlueprintClass;
         return BlueprintsSoFar;
