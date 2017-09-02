@@ -151,11 +151,13 @@ export default class Builder {
    */
   public tree: Tree;
 
+  protected addonsUnderTest: string[];
+
   /**
    * Creates an instance of Builder for the given directory, as a child of the given Project. If
-   * preseededAddons are supplied, they will be included as child addons of this Builder instance.
+   * addonsUnderTest are supplied, they will be included as child addons of this Builder instance.
    */
-  constructor(pkgDir: string, project: Project, preseededAddons?: string[]) {
+  constructor(pkgDir: string, project: Project, addonsUnderTest: string[] = []) {
     let relativeBuilderPath = path.relative(project.dir, pkgDir);
     debug(`creating builder for ${ relativeBuilderPath === '' ? 'project root' : relativeBuilderPath }`);
 
@@ -163,13 +165,14 @@ export default class Builder {
     this.pkg = readPkg(pkgDir);
     this.distDir = this.pkg.mainDir ? path.join(this.pkgDir, this.pkg.mainDir) : this.pkgDir;
     this.project = project;
+    this.addonsUnderTest = addonsUnderTest;
     this.addons = findPlugins({
       dir: this.distDir,
       keyword: 'denali-addon',
       sort: true,
       includeDev: true,
       configName: 'denali',
-      include: preseededAddons
+      include: addonsUnderTest
     });
   }
 
