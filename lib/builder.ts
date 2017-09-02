@@ -194,7 +194,7 @@ export default class Builder {
 
       let childTrees: Tree[] = [];
       this.childBuilders.forEach((builder) => {
-        if (builder.needsCompile()) {
+        if (builder.needsCompile && builder.needsCompile() || this.addonsUnderTest.includes(builder.pkgDir)) {
           debug(`adding ${ builder.pkg.name } to build queue for on-the-fly compilation`);
           // TODO these aren't caching properly, not being reused
           childTrees.push(this.compileChildBuilder(builder));
