@@ -88,7 +88,7 @@ export default class Blueprint extends Command {
     let addons = findAddons(projectPkg && projectPkg.name !== 'denali');
     debug(`discovering available blueprints from [ ${ addons.map((a) => a.pkg.name).join(', ') } ] addons`);
     addons.forEach((addon) => {
-      this.discoverBlueprintsForAddon(blueprints, addon.pkg.name, path.join(addon.dir, 'blueprints'));
+      this.discoverBlueprintsForAddon(blueprints, addon.pkg.name, path.join(addon.distDir, 'blueprints'));
     });
     return blueprints;
   }

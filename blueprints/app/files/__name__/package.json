@@ -6,6 +6,7 @@
     "test": "denali test"
   },
   "private": true,
+  "mainDir": "dist",
   "engines": {
     "node": ">=6.2.0"
   },
