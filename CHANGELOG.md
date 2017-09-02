@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.14"></a>
+## [0.0.14](https://github.com/denali-js/denali-cli/compare/v0.0.13...v0.0.14) (2017-09-02)
+
+
+### Bug Fixes
+
+* add maindir support to blueprints for addon and app ([4adf3aa](https://github.com/denali-js/denali-cli/commit/4adf3aa))
+* addons under test should automatically be built as child builders when running the dummy app ([1961547](https://github.com/denali-js/denali-cli/commit/1961547))
+* refactor builder for clarity as well as fixes for building addon dummy apps ([01c42ba](https://github.com/denali-js/denali-cli/commit/01c42ba))
+
+
+
 <a name="0.0.13"></a>
 ## [0.0.13](https://github.com/denali-js/denali-cli/compare/v0.0.11...v0.0.13) (2017-08-30)
 
