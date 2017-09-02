@@ -4,6 +4,7 @@ import {
   takeWhile
 } from 'lodash';
 import * as path from 'path';
+import * as fs from 'fs';
 import dedent from 'dedent-js';
 import * as nsp from 'nsp';
 import * as broccoli from 'broccoli';
@@ -102,9 +103,20 @@ export default class Project {
   public buildDummy: boolean;
 
   /**
-   * The root Builder instance that represent's the Project's own package
+   * The root Builder instance that represents the top level builder for the package (might be
+   * the package itself, or the dummy app for an addon under test)
    */
-  protected rootBuilder: Builder;
+  public rootBuilder: Builder;
+
+  /**
+   * The root Tree for the main build process.
+   */
+  public rootTree: Tree;
+
+  /**
+   * The root Tree for the main build process.
+   */
+  protected broccoliBuilder: any;
 
   /**
    * Creates an instance of Project
@@ -118,12 +130,14 @@ export default class Project {
     this.lint = options.lint;
     this.audit = options.audit;
     this.buildDummy = options.buildDummy;
+
+    this.createRootBuilderAndTree();
   }
 
   /**
    * Is this Project instance for an addon?
    */
-  protected get isAddon(): boolean {
+  public get isAddon(): boolean {
     return this.pkg.keywords && this.pkg.keywords.includes('denali-addon');
   }
 
@@ -131,15 +145,30 @@ export default class Project {
    * Get the root builder and it's tree for this Project. Also returns the broccoli.Builder instance
    * based on the root tree
    */
-  protected getBuilderAndTree(): { builder: Builder, tree: Tree, broccoliBuilder: any } {
-    let rootBuilder = this.rootBuilder = Builder.createFor(this.dir, this);
-    let rootTree = rootBuilder.toTree();
+  protected createRootBuilderAndTree() {
+    debug('assembling project build tree');
+    let isAddonUnderTest = this.isAddon && this.buildDummy;
 
-    if (this.isAddon && this.buildDummy) {
-      rootTree = this.buildDummyTree(rootTree);
+    // For addons under test, our root build tree is the dummy app, and the addon gets built as
+    // an on-the-fly child addon build
+    if (isAddonUnderTest) {
+      this.rootBuilder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this, [ this.dir ]);
+      this.rootTree = this.rootBuilder.toTree();
+      // Reach into the dummy app's build and pull out the in-flight builder for this root addon
+      // Normally this tree is just ejected, so we grab a direct handle to it so we can extract the
+      // tests from it
+      let addonBuilder = this.rootBuilder.childBuilders.find((builder) => builder.pkg.name === this.pkg.name);
+      let addonTests = new Funnel(addonBuilder.tree, {
+        include: [ 'test/**/*' ],
+        exclude: [ 'test/dummy/**/*' ]
+      });
+      this.rootTree = new MergeTree([ this.rootTree, addonTests ], { overwrite: true });
+    } else {
+      this.rootBuilder = Builder.createFor(this.dir, this);
+      this.rootTree = this.rootBuilder.toTree();
     }
 
-    let broccoliBuilder = new broccoli.Builder(rootTree);
+    let broccoliBuilder = this.broccoliBuilder = new broccoli.Builder(this.rootTree);
     // tslint:disable-next-line:completed-docs
     function onExit() {
       broccoliBuilder.cleanup();
@@ -147,32 +176,6 @@ export default class Project {
     }
     process.on('SIGINT', onExit);
     process.on('SIGTERM', onExit);
-
-    debug(`building ${ this.pkg.name }`);
-    return {
-      builder: rootBuilder,
-      tree: rootTree,
-      broccoliBuilder
-    };
-  }
-
-  /**
-   * Given the root tree for this project, return the dummy app's tree. This creates a Builder for
-   * the dummy app itself, plus moves the addon's test suite into the dummy app's tree.
-   */
-  protected buildDummyTree(rootTree: Tree): Tree {
-    debug(`building ${ this.pkg.name }'s dummy app`);
-    let dummyBuilder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this, [ this.dir ]);
-    let dummyTree = dummyBuilder.toTree();
-    let addonTests = new Funnel(rootTree, {
-      include: [ 'test/**/*' ],
-      exclude: [ 'test/dummy/**/*' ]
-    });
-    rootTree = new Funnel(rootTree, {
-      exclude: [ 'test/**/*' ],
-      destDir: path.join('node_modules', this.pkg.name)
-    });
-    return new MergeTree([ rootTree, dummyTree, addonTests ], { overwrite: true });
   }
 
   /**
@@ -181,11 +184,10 @@ export default class Project {
    */
   public async build(outputDir: string = 'dist'): Promise<string> {
     debug('building project');
-    let { broccoliBuilder, builder } = this.getBuilderAndTree();
-    spinner.start(`Building ${ builder.buildDescription() }`);
+    spinner.start(`Building ${ this.rootBuilder.buildDescription() }`);
     let timer = startTimer();
     try {
-      let results = await broccoliBuilder.build();
+      let results = await this.broccoliBuilder.build();
       debug('broccoli build finished');
       this.finishBuild(results, outputDir);
       debug('build finalized');
@@ -197,7 +199,7 @@ export default class Project {
       }
       throw new NestedError('Project failed to build', err);
     } finally {
-      await broccoliBuilder.cleanup();
+      await this.broccoliBuilder.cleanup();
     }
     return outputDir;
   }
@@ -210,9 +212,8 @@ export default class Project {
     options.onBuild = options.onBuild || noop;
     // Start watcher
     let timer = startTimer();
-    let { broccoliBuilder, builder } = this.getBuilderAndTree();
-    spinner.start(`Building ${ builder.buildDescription() }`);
-    let watcher = new Watcher(broccoliBuilder, { beforeRebuild: options.beforeRebuild, interval: 100 });
+    spinner.start(`Building ${ this.rootBuilder.buildDescription() }`);
+    let watcher = new Watcher(this.broccoliBuilder, { beforeRebuild: options.beforeRebuild, interval: 100 });
 
     // Handle watcher events
     watcher.on('buildstart', async () => {
@@ -289,12 +290,22 @@ export default class Project {
   }
 
   protected copyBuildOutput(buildResultDir: string, destDir: string): void {
+    debug(`copying broccoli build output to final destination dir: ${ destDir }`);
     if (!path.isAbsolute(buildResultDir)) {
       buildResultDir = path.resolve(buildResultDir);
     }
 
     rimraf.sync(destDir);
     copyDereferenceSync(buildResultDir, destDir);
+
+    // If this is an addon under test (i.e. we are building the dummy app), then by now we
+    // have the compiled dummy app inside destDir. Now we just symlink from destDir/node_modules
+    // out to our addon's directory so you can load the addon from the built dummy app
+    if (this.isAddon && this.buildDummy) {
+      debug('symlinking root addon into dummy app build');
+      fs.mkdirSync(path.join(destDir, 'node_modules'));
+      fs.symlinkSync(this.dir, path.join(destDir, 'node_modules', this.pkg.name));
+    }
   }
 
   /**
@@ -302,6 +313,7 @@ export default class Project {
    * match the root builder's `ignoreVulnerabilities` array.
    */
   protected auditPackage() {
+    debug('sending package.json to nsp for audit');
     let pkg = path.join(this.dir, 'package.json');
     nsp.check({ package: pkg }, (err: any, vulnerabilities: Vulnerability[]) => {
       if (err && [ 'ENOTFOUND', 'ECONNRESET' ].indexOf(err.code) > -1) {
@@ -311,6 +323,7 @@ export default class Project {
       if (vulnerabilities && vulnerabilities.length > 0) {
         vulnerabilities = this.filterIgnoredVulnerabilities(vulnerabilities, this.rootBuilder.ignoreVulnerabilities);
         if (vulnerabilities.length > 0) {
+          debug('nsp found vulnerabilities');
           ui.warn('WARNING: Some packages in your package.json may have security vulnerabilities:');
           vulnerabilities.map(this.printVulnerability);
         }

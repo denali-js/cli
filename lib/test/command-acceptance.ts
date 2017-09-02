@@ -5,6 +5,7 @@ import { exec, spawn, ChildProcess } from 'child_process';
 import * as tmp from 'tmp';
 import * as dedent from 'dedent-js';
 import * as createDebug from 'debug';
+import symlinkAll from '../utils/symlink-all';
 
 const debug = createDebug('denali:test:command-acceptance');
 
@@ -74,11 +75,12 @@ export default class CommandAcceptanceTest {
   constructor(command: string, options: { dir?: string, environment?: string, name?: string, populateWithDummy?: boolean } = {}) {
     this.command = command;
     this.dir = options.dir || (<any>tmp.dirSync({
+      dir: 'tmp',
       unsafeCleanup: !process.env.DENALI_LEAVE_TMP,
-      prefix: `test-${ options.name || 'command-acceptance' }`
+      prefix: `command-acceptance-test-${ options.name || command }-`
     })).name;
     this.environment = options.environment || 'development';
-    this.projectRoot = path.dirname(path.dirname(process.cwd()));
+    this.projectRoot = process.cwd();
     // We don't use node_modules/.bin/denali because if denali-cli is linked in via yarn, it doesn't
     // add the binary symlinks to .bin. See https://github.com/yarnpkg/yarn/issues/2493
     this.denaliPath = path.join(this.projectRoot, 'node_modules', 'denali-cli', 'dist', 'bin', 'denali');
@@ -92,21 +94,18 @@ export default class CommandAcceptanceTest {
    * Copy the dummy app into our test directory
    */
   populateWithDummy(): void {
-    debug(`populating tmp directory for "${ this.command }" command with dummy app`);
+    debug(`populating ${ this.dir } with dummy app`);
     let dummy = path.join(this.projectRoot, 'test', 'dummy');
     let projectPkg = require(path.join(this.projectRoot, 'package.json'));
     let tmpNodeModules = path.join(this.dir, 'node_modules');
     assert(!fs.existsSync(tmpNodeModules), 'You tried to run a CommandAcceptanceTest against a directory that already has an app in it. Did you forget to specify { populateWithDummy: false }?');
     // Copy over the dummy app
     fs.copySync(dummy, this.dir);
-    // Symlink the addon itself as a dependency of the dummy app. The compiled dummy app will have
-    // the compiled addon in it's node_modules
+
     fs.mkdirSync(tmpNodeModules);
-    fs.readdirSync(path.join(this.projectRoot, 'node_modules')).forEach((nodeModuleEntry) => {
-      fs.symlinkSync(path.join(this.projectRoot, 'node_modules', nodeModuleEntry), path.join(tmpNodeModules, nodeModuleEntry));
-    });
-    fs.symlinkSync(path.join(this.projectRoot, 'tmp', 'test', 'node_modules', projectPkg.name), path.join(tmpNodeModules, projectPkg.name));
-    debug('tmp directory populated');
+    symlinkAll(path.join(this.projectRoot, 'node_modules'), tmpNodeModules, { except: [ projectPkg.name ]});
+    symlinkAll(this.projectRoot, path.join(tmpNodeModules, projectPkg.name), { except: [ 'tmp', 'dist', 'node_modules' ]});
+    fs.copySync(path.join(this.projectRoot, 'dist'), path.join(tmpNodeModules, projectPkg.name, 'dist'));
   }
 
   /**
@@ -188,6 +187,10 @@ export default class CommandAcceptanceTest {
       this.spawnedCommand.stdout.on('error', reject);
       this.spawnedCommand.stderr.on('error', reject);
       this.spawnedCommand.on('error', reject);
+      this.spawnedCommand.on('close', () => {
+        this.cleanup();
+        reject(new Error('Spawned command exited without satisfying checkOutput'));
+      });
 
       // Poll periodically to check the results
       this.pollOutput = setInterval(() => {
