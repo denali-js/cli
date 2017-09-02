@@ -7,6 +7,7 @@ import {
 } from 'lodash';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as assert from 'assert';
 import ui from './ui';
 import * as createDebug from 'debug';
 import * as argParser from 'yargs';
@@ -51,8 +52,9 @@ export default function run(projectPkg?: any)  {
   addons.forEach((addon) => {
     let addonCommands = discoverCommands(commands, addon.pkg.name, path.join(addon.distDir, 'commands'));
 
+    debug(`found ${ keys(addonCommands).length } commands from ${ addon.pkg.name }: [ ${ keys(addonCommands).join(', ') } ] `);
     if (addon.pkg.name === 'denali') {
-      debug('found core denali commands');
+      assert(keys(addonCommands).length > 0, 'Denali package was found, but unable to load core commands - is your Denali installation corrupted?');
       coreCommands = addonCommands;
 
       let denaliInstallType: string;
@@ -64,7 +66,6 @@ export default function run(projectPkg?: any)  {
       ui.info(` | denali v${ addon.pkg.version } [${ denaliInstallType }]\n`);
 
     } else {
-      debug(`found ${ keys(addonCommands).length } commands from ${ addon.pkg.name }: [ ${ keys(addonCommands).join(', ') } ] `);
       commands = Object.assign(commands, addonCommands);
     }
   });
