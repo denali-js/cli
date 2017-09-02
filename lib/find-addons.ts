@@ -35,9 +35,7 @@ export default function findAddons(isLocal: boolean): AddonSummary[] {
   if (isLocal) {
     debug(`searching for addons locally in ${ process.cwd() }`);
     let addons = findPlugins(findOptions);
-    addMainDir(addons);
-    debug(`found ${ addons.length } addons: ${ addons.map((addon) => addon.pkg.name).join(', ') }`);
-    return addons;
+    return finalizeAddons(addons);
   }
 
   let npmRoot = execSync('npm root -g').toString().trim();
@@ -76,16 +74,20 @@ export default function findAddons(isLocal: boolean): AddonSummary[] {
     }
   }
 
-  addMainDir(addons);
-  debug(`found ${ addons.length } addons: ${ addons.map((addon) => addon.pkg.name).join(', ') }`);
-  return addons;
-
+  return finalizeAddons(addons);
 }
 
-function addMainDir(addons: AddonSummary[]) {
+function finalizeAddons(addons: AddonSummary[]) {
   addons.forEach((addon) => {
     if (addon.pkg.mainDir) {
       addon.distDir = path.join(addon.dir, addon.pkg.mainDir);
+    } else {
+      addon.distDir = addon.dir;
     }
-  })
+  });
+  let addonDebugList = addons.map((addon) => {
+    return `  - ${ addon.pkg.name } [${ addon.dir }]\n`;
+  }).join('');
+  debug(`found ${ addons.length } addons:\n${ addonDebugList }`);
+  return addons;
 }
