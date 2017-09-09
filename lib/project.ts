@@ -152,7 +152,7 @@ export default class Project {
     // For addons under test, our root build tree is the dummy app, and the addon gets built as
     // an on-the-fly child addon build
     if (isAddonUnderTest) {
-      this.rootBuilder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this, [ this.dir ]);
+      this.rootBuilder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this, null, [ this.dir ]);
       this.rootTree = this.rootBuilder.toTree();
       // Reach into the dummy app's build and pull out the in-flight builder for this root addon
       // Normally this tree is just ejected, so we grab a direct handle to it so we can extract the
@@ -164,7 +164,7 @@ export default class Project {
       });
       this.rootTree = new MergeTree([ this.rootTree, addonTests ], { overwrite: true });
     } else {
-      this.rootBuilder = Builder.createFor(this.dir, this);
+      this.rootBuilder = Builder.createFor(this.dir, this, null);
       this.rootTree = this.rootBuilder.toTree();
     }
 

@@ -50,16 +50,16 @@ export default class Builder {
    * A factory method that checks for a local Builder class in `/denali-build.js`, and instantiates
    * that if present.
    */
-  public static createFor(dir: string, project: Project, preseededAddons?: string[]): Builder {
+  public static createFor(dir: string, project: Project, parentBuilder: Builder, preseededAddons?: string[]): Builder {
     if (!this.buildersCache[dir]) {
       // Use the local denali-build.js if present
       let denaliBuildPath = path.join(dir, 'denali-build');
       if (fs.existsSync(`${ denaliBuildPath }.js`)) {
-        let LocalBuilder = require(denaliBuildPath);
-        LocalBuilder = LocalBuilder.default || LocalBuilder;
-        this.buildersCache[dir] = new LocalBuilder(dir, project, preseededAddons);
+        let LocalBuilderModule = require(denaliBuildPath);
+        let LocalBuilder: typeof Builder = LocalBuilderModule.default || LocalBuilderModule;
+        this.buildersCache[dir] = new LocalBuilder(dir, project, parentBuilder, preseededAddons);
       } else {
-        this.buildersCache[dir] = new this(dir, project, preseededAddons);
+        this.buildersCache[dir] = new this(dir, project, parentBuilder, preseededAddons);
       }
     }
     return this.buildersCache[dir];
@@ -151,13 +151,15 @@ export default class Builder {
    */
   public tree: Tree;
 
+  public parentBuilder: Builder;
+
   protected addonsUnderTest: string[];
 
   /**
    * Creates an instance of Builder for the given directory, as a child of the given Project. If
    * addonsUnderTest are supplied, they will be included as child addons of this Builder instance.
    */
-  constructor(pkgDir: string, project: Project, addonsUnderTest: string[] = []) {
+  constructor(pkgDir: string, project: Project, parentBuilder: Builder, addonsUnderTest: string[] = []) {
     let relativeBuilderPath = path.relative(project.dir, pkgDir);
     debug(`creating builder for ${ relativeBuilderPath === '' ? 'project root' : relativeBuilderPath }`);
 
@@ -165,6 +167,7 @@ export default class Builder {
     this.pkg = readPkg(pkgDir);
     this.distDir = this.pkg.mainDir ? path.join(this.pkgDir, this.pkg.mainDir) : this.pkgDir;
     this.project = project;
+    this.parentBuilder = parentBuilder;
     this.addonsUnderTest = addonsUnderTest;
     this.addons = findPlugins({
       dir: this.distDir,
@@ -190,7 +193,7 @@ export default class Builder {
       let tree = this._prepareSelf();
 
       // Find child addons
-      this.childBuilders = this.addons.map((addon) => Builder.createFor(addon.dir, this.project));
+      this.childBuilders = this.addons.map((addon) => Builder.createFor(addon.dir, this.project, this));
 
       let childTrees: Tree[] = [];
       this.childBuilders.forEach((builder) => {
