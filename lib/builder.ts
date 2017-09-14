@@ -92,7 +92,9 @@ export default class Builder {
   /**
    * A list of files that should be copied as-is into the final build
    */
-  public packageFiles: string[] = [];
+  public packageFiles: string[] = [
+    'package.json'
+  ];
 
   /**
    * A list of directories that should be copied as-is into the final build
