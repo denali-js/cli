@@ -189,7 +189,14 @@ export default class CommandAcceptanceTest {
       this.spawnedCommand.on('error', reject);
       this.spawnedCommand.on('close', () => {
         this.cleanup();
-        reject(new Error('Spawned command exited without satisfying checkOutput'));
+        let message = 'Spawned command exited without satisfying checkOutput\n';
+        message += dedent`
+          ====> stdout:
+          ${ stdoutBuffer }
+          ====> stderr:
+          ${ stderrBuffer }
+        `;
+        reject(new Error(message));
       });
 
       // Poll periodically to check the results
