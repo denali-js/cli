@@ -57,8 +57,7 @@ if (!pkgPath) {
       process.chdir(pkgDir);
       require(path.join(localCliDir, 'dist', 'lib', 'bootstrap')).default(pkg);
     } catch (error) {
-      console.error('Error encountered while starting up denali-cli:');
-      console.error(error.stack);
+      throw new NestedError('Error encountered while starting up denali-cli', error);
     }
   } catch (e) {
     loadGlobalCli();
