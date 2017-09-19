@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.15"></a>
+## [0.0.15](https://github.com/denali-js/denali-cli/compare/v0.0.14...v0.0.15) (2017-09-19)
+
+
+### Bug Fixes
+
+* add package.json to build output, needed because addon dummy apps need a package.json to avoid picking up to addons, and it doesnt hurt elsewhere ([39cf01f](https://github.com/denali-js/denali-cli/commit/39cf01f))
+* ensure failures to load denali result in error exit code ([0356b31](https://github.com/denali-js/denali-cli/commit/0356b31))
+
+
+### Features
+
+* add Builder.parentBuilder ([079e5c1](https://github.com/denali-js/denali-cli/commit/079e5c1))
+* ensure spinner does not interfere with other process output ([daf72bb](https://github.com/denali-js/denali-cli/commit/daf72bb))
+
+
+
 <a name="0.0.14"></a>
 ## [0.0.14](https://github.com/denali-js/denali-cli/compare/v0.0.13...v0.0.14) (2017-09-02)
 
