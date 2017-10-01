@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.17"></a>
+## [0.0.17](https://github.com/denali-js/denali-cli/compare/v0.0.16...v0.0.17) (2017-10-01)
+
+
+### Bug Fixes
+
+* fix dedent import ([#34](https://github.com/denali-js/denali-cli/issues/34)) ([07e6c42](https://github.com/denali-js/denali-cli/commit/07e6c42))
+
+
+
 <a name="0.0.16"></a>
 ## [0.0.16](https://github.com/denali-js/denali-cli/compare/v0.0.15...v0.0.16) (2017-09-19)
 

@@ -1,6 +1,6 @@
 {
   "name": "denali-cli",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "The official CLI for starting, building, and running Denali apps and addons",
   "homepage": "http://denali.js.org",
   "repository": "denali-js/denali-cli",
