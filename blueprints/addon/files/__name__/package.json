@@ -40,6 +40,9 @@
   },
   "ava": {
     "plugins": [],
-    "presets": []
+    "presets": [],
+    "require": [
+      "main-dir"
+    ]
   }
 }
