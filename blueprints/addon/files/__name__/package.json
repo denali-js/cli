@@ -10,7 +10,7 @@
     "denali-addon",
     "addon"
   ],
-  "main": "app/addon.js",
+  "main": "lib/index.js",
   "mainDir": "dist",
   "license": "MIT",
   "dependencies": {
