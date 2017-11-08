@@ -1,7 +1,9 @@
 export { default as Blueprint } from './blueprint';
-export { default as Builder } from './builder';
+export { default as Builder } from './builders/base';
+export { default as AppBuilder } from './builders/app';
+export { default as AddonBuilder } from './builders/addon';
+export { default as DummyBuilder } from './builders/dummy';
 export { default as Command } from './command';
-export { default as PackageTree } from './package-tree';
 export { default as Project } from './project';
 export { default as spinner } from './spinner';
 export { default as startTimer } from './timer';

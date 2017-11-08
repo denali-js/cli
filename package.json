@@ -32,10 +32,14 @@
     "typescript": "^2.4.2"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc && mv dist/bin/denali.js dist/bin/denali && chmod +x dist/bin/denali && echo 'Build successful'",
+    "build": "npm run build:clean && npm run build:compile && npm run build:bin && npm run build:templates",
+    "build:clean": "rm -rf dist coverage .nyc_output",
+    "build:compile": "tsc",
+    "build:bin": "mv dist/bin/denali.js dist/bin/denali && chmod +x dist/bin/denali",
+    "build:templates": "cp -r lib/templates dist/lib/templates",
     "prepublishOnly": "npm run build",
     "lint": "! tslint --project tsconfig.json -c tslint.json --type-check | sed \"s|$PWD/||\" | grep ERROR",
-    "test": "npm run lint && rm -rf dist coverage .nyc_output && npm run build && nyc ava dist/test/acceptance"
+    "test": "npm run lint && npm run build && nyc ava dist/test/acceptance"
   },
   "license": "MIT",
   "dependencies": {
@@ -57,7 +61,9 @@
     "@types/yargs": "^8.0.2",
     "bluebird": "^3.5.0",
     "broccoli": "^0.16.9",
+    "broccoli-concat": "^3.2.2",
     "broccoli-file-creator": "^1.1.1",
+    "broccoli-filter": "^1.2.4",
     "broccoli-funnel": "^1.2.0",
     "broccoli-merge-trees": "^1.2.1",
     "broccoli-plugin": "^1.3.0",
@@ -69,6 +75,7 @@
     "debug": "^3.0.1",
     "dedent-js": "^1.0.1",
     "dotenv": "^4.0.0",
+    "fast-sourcemap-concat": "^1.2.3",
     "find-plugins": "^1.1.3",
     "findup-sync": "^2.0.0",
     "fs-extra": "^4.0.1",
@@ -88,6 +95,7 @@
     "rimraf": "^2.6.1",
     "semver": "^5.4.1",
     "source-map-support": "^0.4.16",
+    "symlink-or-copy": "^1.1.8",
     "tmp": "^0.0.33",
     "try-require": "^1.2.1",
     "tslib": "^1.7.1",
