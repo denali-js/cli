@@ -17,8 +17,8 @@ process.title = 'denali';
 
 let version = process.version;
 
-if (!satisfies(process.version, '>=6.9')) {
-  console.error(chalk.red('`denali` requires node version >= 6.9, you used ' + version));
+if (!satisfies(process.version, '>=7.6')) {
+  console.error(chalk.red('`denali` requires node version >= 7.6, you used ' + version));
   process.exit(1);
 }
 
