@@ -1,7 +1,6 @@
-import test from 'ava';
 import { appAcceptanceTest } from 'denali';
 
-appAcceptanceTest(test);
+const test = appAcceptanceTest();
 
 test('GET / > should return a welcome message', async (t) => {
   let { body } = await t.context.app.get('/');
