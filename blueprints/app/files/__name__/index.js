@@ -1,7 +1,9 @@
-const Bundle = require('./dist/bundle');
+const bundle = require('./dist/<%= name %>.runtime');
+const container = bundle();
 
-let container = Bundle();
-let application = container.lookup('app:application');
+const Application = container.lookup('app:application');
+const application = new Application(container.loader, { environment: process.env.NODE_ENV || 'development' });
 application.start();
 
-export default application;
+module.exports = application;
+
