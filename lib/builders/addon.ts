@@ -2,10 +2,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { template, camelCase } from 'lodash';
 import { Tree } from 'broccoli';
-// import * as Funnel from 'broccoli-funnel';
 import BaseBuilder from './base';
 import Concat from '../trees/concat';
-// import globify from '../utils/globify';
 
 const bundleFragmentOpen = template(fs.readFileSync(path.join(__dirname, '..', 'templates', 'bundle-fragment-open.ejs'), 'utf-8'));
 const bundleFragmentClose = fs.readFileSync(path.join(__dirname, '..', 'templates', 'bundle-fragment-close.ejs'), 'utf-8');
@@ -23,7 +21,6 @@ export default class AddonBuilder extends BaseBuilder {
     let precompiledTree = this.precompiledTree();
     if (precompiledTree) {
       return precompiledTree;
-      // return new Funnel(precompiledTree, { files: [ `${ this.pkg.name }.runtime.js`, `${ this.pkg.name }.runtime.map` ] });
     }
     let tree = super.toTree();
     if (this.parent) {
@@ -32,19 +29,6 @@ export default class AddonBuilder extends BaseBuilder {
     }
     return tree;
   }
-
-  // toDevtimeTree(): Tree {
-  //   let precompiledTree = this.precompiledTree();
-  //   if (precompiledTree) {
-  //     return new Funnel(precompiledTree, { include: globify(this.devtimeSources()) });
-  //   }
-  //   let devtimeTree = super.toDevtimeTree();
-  //   if (this.parent) {
-  //     // Compiling on the fly, so eject the result
-  //     this.eject(devtimeTree, path.join(this.dir, 'dist'));
-  //   }
-  //   return devtimeTree;
-  // }
 
   needsCompilation(): boolean {
     let isRootBuilder = !this.parent;

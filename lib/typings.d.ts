@@ -6,6 +6,7 @@ declare module "walk-sync";
 declare module "require-tree";
 declare module "read-pkg-up";
 declare module "read-pkg";
+declare module "pkg-dir";
 declare module "nested-error-stacks";
 declare module "dedent-js";
 declare module "nsp";
