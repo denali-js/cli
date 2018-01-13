@@ -61,7 +61,7 @@ export default class AddonBuilder extends BaseBuilder {
       header: bundleFragmentOpen(data),
       footer: bundleFragmentClose,
       wrapAsModules: true,
-      outputFile: `${ this.pkg.name }.runtime.js`,
+      outputFile: `addon.runtime.js`,
       baseDir: this.dir
     });
     return tree;

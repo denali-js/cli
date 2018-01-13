@@ -15,14 +15,14 @@ export default class AppBuilder extends BaseBuilder {
   bundle(tree: Tree): Tree {
     tree = new Concat(tree, {
       wrapAsModules: true,
-      outputFile: `${ this.pkg.name }.runtime.js`,
+      outputFile: `app.runtime.js`,
       baseDir: this.dir
     });
     let addonBundles = this.addons.map((addon) => {
       return new Funnel(addon.toTree(), {
         files: [
-          `${ addon.pkg.name }.runtime.js`,
-          `${ addon.pkg.name }.runtime.map`
+          `addon.runtime.js`,
+          `addon.runtime.map`
         ]
       });
     });
@@ -30,7 +30,7 @@ export default class AppBuilder extends BaseBuilder {
     tree = new Concat(tree, {
       header: bundleOpen({ pkgName: this.pkg.name, version: this.pkg.version }),
       footer: bundleClose,
-      outputFile: `${ this.pkg.name }.runtime.js`
+      outputFile: `bundle.runtime.js`
     });
     return tree;
   }
