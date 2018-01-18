@@ -5,12 +5,13 @@ import findPlugins from 'find-plugins';
 import { Tree } from 'broccoli';
 import * as MergeTree from 'broccoli-merge-trees';
 import { sync as readPkg } from 'read-pkg';
-// import { uniq } from 'lodash';
 import AddonBuilder from './addon';
 import EjectTree from '../trees/eject';
 import AppBuilder from './app';
 import globify from '../utils/globify';
+import UnitTests from '../trees/unit-tests';
 // import { debug } from 'broccoli-stew';
+
 
 export default abstract class BaseBuilder {
 
@@ -41,6 +42,8 @@ export default abstract class BaseBuilder {
   ejections: Map<string, Tree[]> = new Map();
 
   processSelf: (tree: Tree, dir: string) => Tree;
+
+  unitTestDir = path.join('test', 'unit');
 
   constructor(dir: string, environment: string, parent: BaseBuilder) {
     this.dir = dir;
@@ -79,15 +82,26 @@ export default abstract class BaseBuilder {
   }
 
   toTree() {
-    let tree = this.toBaseTree();
-    tree = this.compile(tree);
+    let baseTree = this.toBaseTree();
+    let compiledTrees = [];
 
-    let bundleTree = new Funnel(tree, {
+    compiledTrees.push(this.compile(baseTree));
+
+    let bundleTree = new Funnel(baseTree, {
       include: globify(this.bundledSources()),
       annotation: 'combined tree (bundled files)'
     });
-    bundleTree = this.bundle(bundleTree);
-    tree = new MergeTree([tree, bundleTree]);
+    compiledTrees.push(this.bundle(bundleTree));
+
+    if (this.environment === 'test') {
+      let unitTestsTree = new Funnel(baseTree, {
+        include: globify([ this.unitTestDir ]),
+        annotation: 'unit tests'
+      });
+      compiledTrees.push(new UnitTests(unitTestsTree, { baseDir: this.dir, sourceRoot: this.unitTestDir }));
+    }
+
+    let tree = new MergeTree(compiledTrees);
 
     return this.mergeEjections(tree);
   }
