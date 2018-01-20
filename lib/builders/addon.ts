@@ -4,11 +4,17 @@ import { template, camelCase } from 'lodash';
 import { Tree } from 'broccoli';
 import BaseBuilder from './base';
 import Concat from '../trees/concat';
+// import { debug } from 'broccoli-stew';
 
 const bundleFragmentOpen = template(fs.readFileSync(path.join(__dirname, '..', 'templates', 'bundle-fragment-open.ejs'), 'utf-8'));
 const bundleFragmentClose = fs.readFileSync(path.join(__dirname, '..', 'templates', 'bundle-fragment-close.ejs'), 'utf-8');
 
 export default class AddonBuilder extends BaseBuilder {
+
+  /**
+   * Is this addon currently under test?
+   */
+  underTest = false;
 
   processParent: (tree: Tree, dir: string) => Tree;
 
@@ -17,29 +23,25 @@ export default class AddonBuilder extends BaseBuilder {
     return [ 'app', 'config', 'lib' ];
   }
 
-  toTree(): Tree {
+  assembleTree(): Tree {
     let precompiledTree = this.precompiledTree();
     if (precompiledTree) {
       return precompiledTree;
     }
-    let tree = super.toTree();
-    if (this.parent) {
-      // Compiling on the fly, so eject the result
-      this.eject(tree, path.join(this.dir, 'dist'));
-    }
-    return tree;
+    return super.assembleTree();
   }
 
   needsCompilation(): boolean {
     let isRootBuilder = !this.parent;
     let isDeveloping = this.isDevelopingAddon();
+    let isAddonUnderTest = this.underTest;
     let isSymlinked = false;
     try {
       isSymlinked = fs.lstatSync(this.dir).isSymbolicLink();
     } catch (e) { /* file might not exist at all */ }
     let isMissingCompiledOutput = !fs.existsSync(path.join(this.dir, 'dist'));
 
-    return isRootBuilder || isDeveloping || isSymlinked || isMissingCompiledOutput;
+    return isRootBuilder || isDeveloping || isAddonUnderTest || isSymlinked || isMissingCompiledOutput;
   }
 
   precompiledTree(): Tree | false {
@@ -61,10 +63,14 @@ export default class AddonBuilder extends BaseBuilder {
       header: bundleFragmentOpen(data),
       footer: bundleFragmentClose,
       wrapAsModules: true,
-      outputFile: `addon.runtime.js`,
+      outputFile: `${ this.pkg.name }.fragment.js`,
       baseDir: this.dir
     });
     return tree;
+  }
+
+  unitTestBundleName() {
+    return this.parent.pkg.name;
   }
 
 }

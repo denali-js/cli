@@ -29,6 +29,8 @@ declare module "broccoli-funnel";
 declare module "broccoli-filter";
 declare module "broccoli-concat/concat";
 declare module "fast-sourcemap-concat";
+declare module "source-map-url";
+declare module "inline-source-map-comment";
 declare module "symlink-or-copy";
 declare module "broccoli-stew";
 declare module "broccoli-file-creator";

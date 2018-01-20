@@ -16,6 +16,7 @@ const debug = createDebug('denali-cli:project');
 
 export interface WatchOptions {
   builder?: Builder;
+  destDir?: string;
   afterBuild?(project: Project): void;
   beforeRebuild?(): Promise<void> | void;
 }
@@ -75,15 +76,19 @@ export default class Project {
     this.pkg = require(path.join(this.dir, 'package.json'));
   }
 
+  get isAddon() {
+    return this.pkg.keywords && this.pkg.keywords.includes('denali-addon');
+  }
+
   // TODO build descriptions
-  async _build(tree: Tree): Promise<void> {
+  async _build(tree: Tree, destDir: string): Promise<void> {
     try {
       debug('building project');
       let timer = startTimer();
       spinner.start(`Building ...`);
       let broccoli = new Broccoli(tree);
       let results = await broccoli.build();
-      await this.finishBuild(results);
+      await this.finishBuild(results, destDir);
       debug('project build finished');
       spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
     } catch (err) {
@@ -96,16 +101,16 @@ export default class Project {
     }
   }
 
-  async build() {
+  async build(destDir: string = path.join(this.dir, 'dist')) {
     let builder = Builder.createFor(this.dir, this.environment);
     let tree = builder.toTree();
-    return this._build(tree);
+    return this._build(tree, destDir);
   }
 
-  async buildDummy() {
+  async buildDummy(destDir: string = path.join(this.dir, 'dist')) {
     let builder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this.environment);
     let tree = builder.toTree();
-    return this._build(tree);
+    return this._build(tree, destDir);
   }
 
   /**
@@ -116,6 +121,7 @@ export default class Project {
     let timer = startTimer();
     let broccoli = new Broccoli(tree);
     let watcher = new Watcher(broccoli, { beforeRebuild: options.beforeRebuild, interval: 100 });
+    let destDir = options.destDir || path.join(this.dir, 'dist');
 
     // Handle watcher events
     watcher.on('buildstart', async () => {
@@ -125,7 +131,7 @@ export default class Project {
     });
     watcher.on('change', async (results: { directory: string, graph: any }) => {
       debug('rebuild finished, wrapping up');
-      this.finishBuild(results);
+      this.finishBuild(results, destDir);
       spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`, this.pkg.name);
       options.afterBuild(this);
     });
@@ -147,16 +153,16 @@ export default class Project {
     });
   }
 
-  async watch(options?: WatchOptions) {
+  async watch(options: WatchOptions = {}) {
     let builder = Builder.createFor(this.dir, this.environment);
     let tree = builder.toTree();
     return this._watch(tree, options);
   }
 
-  async watchDummy() {
+  async watchDummy(options: WatchOptions = {}) {
     let builder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this.environment);
     let tree = builder.toTree();
-    return this._watch(tree);
+    return this._watch(tree, options);
   }
 
   /**
@@ -191,9 +197,8 @@ export default class Project {
    * After a build completes, this method cleans up the result. It copies the results out of tmp and
    * into the output directory, and kicks off any optional behaviors post-build.
    */
-  finishBuild(results: BuildResults) {
+  finishBuild(results: BuildResults, destDir: string) {
     debug(`copying broccoli build output to dist`);
-    let destDir = path.join(this.dir, 'dist');
     rimraf.sync(destDir);
     copyDereferenceSync(path.resolve(results.directory), destDir);
     if (this.printSlowTrees) {

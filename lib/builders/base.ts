@@ -45,6 +45,8 @@ export default abstract class BaseBuilder {
 
   unitTestDir = path.join('test', 'unit');
 
+  private _cachedTree: Tree;
+
   constructor(dir: string, environment: string, parent: BaseBuilder) {
     this.dir = dir;
     this.environment = environment;
@@ -65,45 +67,70 @@ export default abstract class BaseBuilder {
     });
   }
 
-  protected sources(): string[] {
-    let dirs = [ 'app', 'config', 'lib', 'blueprints', 'commands', 'config' ];
-    if (this.environment === 'test') {
-      dirs.push('test');
-    }
+  protected sources(): (string | Tree)[] {
+    let dirs = [ 'app', 'config', 'lib', 'blueprints', 'commands', 'config', 'test' ];
     return dirs;
   }
 
   protected bundledSources(): string[] {
     let dirs = [ 'app', 'config', 'lib' ];
-    if (this.environment === 'test') {
-      dirs.push('test');
-    }
     return dirs;
   }
 
-  toTree() {
+  assembleTree() {
     let baseTree = this.toBaseTree();
-    let compiledTrees = [];
+    let finalTrees: Tree[] = [];
 
-    compiledTrees.push(this.compile(baseTree));
+    let compiledTree = this.compile(baseTree);
+    finalTrees.push(compiledTree);
 
-    let bundleTree = new Funnel(baseTree, {
+    let bundleTree = new Funnel(compiledTree, {
       include: globify(this.bundledSources()),
       annotation: 'combined tree (bundled files)'
     });
-    compiledTrees.push(this.bundle(bundleTree));
+    bundleTree = this.bundle(bundleTree);
+    finalTrees.push(bundleTree);
 
     if (this.environment === 'test') {
-      let unitTestsTree = new Funnel(baseTree, {
-        include: globify([ this.unitTestDir ]),
-        annotation: 'unit tests'
-      });
-      compiledTrees.push(new UnitTests(unitTestsTree, { baseDir: this.dir, sourceRoot: this.unitTestDir }));
+      let unitTestsTree = this.compileUnitTests(compiledTree);
+      finalTrees.push(unitTestsTree);
     }
 
-    let tree = new MergeTree(compiledTrees);
+    let tree = new MergeTree(finalTrees, { overwrite: true });
 
-    return this.mergeEjections(tree);
+    // Compiling on the fly, so eject the result. Only applies for addons really, but we
+    // need to invoke it here to ensure the ejection is recorded before invoking
+    // `mergeEjections`
+    if (this.parent) {
+      this.eject(tree, path.join(this.dir, 'dist'));
+    }
+
+    return tree;
+  }
+
+  compileUnitTests(compiledTree: Tree) {
+    let unitTestsTree = new Funnel(compiledTree, {
+      include: globify([this.unitTestDir]),
+      annotation: 'unit tests'
+    });
+    return new UnitTests(unitTestsTree, {
+      bundleName: this.unitTestBundleName(),
+      baseDir: this.dir,
+      sourceRoot: this.unitTestDir
+    });
+  }
+
+  unitTestBundleName() {
+    return this.pkg.name;
+  }
+
+  toTree() {
+    if (!this._cachedTree) {
+      let tree = this.assembleTree();
+      tree = this.mergeEjections(tree);
+      this._cachedTree = tree;
+    }
+    return this._cachedTree;
   }
 
   /**
@@ -149,13 +176,16 @@ export default abstract class BaseBuilder {
 
   protected toBaseTree(): Tree {
     let sources = this.sources();
-    sources = sources.filter((dir) => typeof dir !== 'string' || fs.existsSync(path.join(this.dir, dir)));
     sources = sources.map((dir) => {
       if (typeof dir === 'string') {
-        return new Funnel(path.join(this.dir, dir), { destDir: dir });
+        let localpath = path.join(this.dir, dir);
+        if (fs.existsSync(localpath)) {
+          return new Funnel(localpath, { destDir: dir });
+        }
+        return false;
       }
       return dir;
-    });
+    }).filter(Boolean);
     return new MergeTree(sources, { overwrite: true, annotation: 'baseTree' });
   }
 
