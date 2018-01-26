@@ -12,7 +12,6 @@ import { execSync, ExecSyncOptions } from 'child_process';
 import { sync as commandExists } from 'command-exists';
 import * as chalk from 'chalk';
 import * as walk from 'walk-sync';
-import * as codeshift from 'jscodeshift';
 import * as mkdirp from 'mkdirp';
 import * as rimraf from 'rimraf';
 import * as yargs from 'yargs';
@@ -330,8 +329,8 @@ export default class Blueprint extends Command {
       ui.warn(`Attempted to add "${ method.toUpperCase() } ${ urlPattern } -> ${ actionPath }" route, but config/routes.js does not exist. Skipping ...`);
       return;
     }
-    let j = codeshift;
-    let ast = codeshift(routesSource);
+    let j = require('jscodeshift');
+    let ast = j(routesSource);
     let drawRoutesFunction = ast.find(j.ExportDefaultDeclaration).get().value.declaration;
     let routerArgName = drawRoutesFunction.params[0].name;
     let drawRoutesFunctionBody = j(drawRoutesFunction.body);
@@ -377,8 +376,8 @@ export default class Blueprint extends Command {
       ui.warn(`Attempted to remove "${ method.toUpperCase() } ${ urlPattern } -> ${ actionPath }" route, but config/routes.js does not exist. Skipping ...`);
       return;
     }
-    let j = codeshift;
-    let ast = codeshift(routesSource);
+    let j = require('codeshift');
+    let ast = j(routesSource);
     let drawRoutesFunction = ast.find(j.ExportDefaultDeclaration).get().value.declaration;
     let routerArgName = drawRoutesFunction.params[0].name;
     let drawRoutesFunctionBody = j(drawRoutesFunction.body);
