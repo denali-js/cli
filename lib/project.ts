@@ -4,7 +4,7 @@ import * as rimraf from 'rimraf';
 import printSlowNodes from 'broccoli-slow-trees';
 import { sync as copyDereferenceSync } from 'copy-dereference';
 import * as createDebug from 'debug';
-import * as tryRequire from 'try-require';
+import { sync as glob } from 'glob';
 import * as NestedError from 'nested-error-stacks';
 import Builder from './builders/base';
 import Watcher from './watcher';
@@ -178,16 +178,11 @@ export default class Project {
   async createApplication(): Promise<any> {
     try {
       await this.build();
-      let applicationPath = path.resolve(path.join(this.dir, 'dist', 'app', 'application'));
-      let Application = tryRequire(applicationPath);
-      Application = Application.default || Application;
-      if (!Application) {
-        throw new Error(`Denali was unable to load app/application.js from ${ applicationPath }`);
-      }
-      return new Application({
-        dir: path.resolve(path.join(this.dir, 'dist')),
-        environment: this.environment
-      });
+      let bundlePath = glob(path.join(this.dir, 'dist', '*.bundle.js'))[0];
+      let bundle = require(bundlePath);
+      let container = bundle();
+      let Application = container.lookup('app:application');
+      return new Application(container.loader, { environment: this.environment });
     } catch (error) {
       throw new NestedError('Failed to create application', error);
     }

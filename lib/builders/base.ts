@@ -4,12 +4,13 @@ import * as Funnel from 'broccoli-funnel';
 import findPlugins from 'find-plugins';
 import { Tree } from 'broccoli';
 import * as MergeTree from 'broccoli-merge-trees';
+import * as writeFile from 'broccoli-file-creator';
 import { sync as readPkg } from 'read-pkg';
 import AddonBuilder from './addon';
-import EjectTree from '../trees/eject';
 import AppBuilder from './app';
 import globify from '../utils/globify';
 import UnitTests from '../trees/unit-tests';
+import * as createDebug from 'debug';
 // import { debug } from 'broccoli-stew';
 
 
@@ -45,16 +46,29 @@ export default abstract class BaseBuilder {
 
   unitTestDir = path.join('test', 'unit');
 
+  packageFiles = [ 'package.json' ];
+
   private _cachedTree: Tree;
+
+  protected debug: (msg: string) => void;
 
   constructor(dir: string, environment: string, parent: BaseBuilder) {
     this.dir = dir;
     this.environment = environment;
     this.parent = parent;
     this.pkg = readPkg(dir);
+
+    this.debug = createDebug(`denali-cli:builder:${ this.pkg.name }@${ this.pkg.version }`);
+    this.debug(`creating builder for ${ this.pkg.name }@${ this.pkg.version }`);
+
     this.addons = this.discoverAddons();
   }
 
+  /**
+   * Look for addons in the node_modules folder. Only search packages explicitly
+   * mentioned in package.json, and look for the `denali-addon` keyword in their
+   * package.json's. Then create a Builder for each one.
+   */
   protected discoverAddons(): AddonBuilder[] {
     return findPlugins({
       dir: this.dir,
@@ -63,20 +77,31 @@ export default abstract class BaseBuilder {
       includeDev: true,
       configName: 'denali'
     }).map((addon) => {
+      this.debug(`discovered child addon: ${ addon.pkg.name }`);
       return <AddonBuilder>BaseBuilder.createFor(addon.dir, this.environment, this);
     });
   }
 
+  /**
+   * Which directories should be considered "source" directories to be fed into
+   * the main build pipeline?
+   */
   protected sources(): (string | Tree)[] {
     let dirs = [ 'app', 'config', 'lib', 'blueprints', 'commands', 'config', 'test' ];
     return dirs;
   }
 
+  /**
+   * Which directories should be bundled into runtime bundles/fragments?
+   */
   protected bundledSources(): string[] {
     let dirs = [ 'app', 'config', 'lib' ];
     return dirs;
   }
 
+  /**
+   * Assemble the main build pipeline
+   */
   assembleTree() {
     let baseTree = this.toBaseTree();
     let finalTrees: Tree[] = [];
@@ -92,22 +117,37 @@ export default abstract class BaseBuilder {
     finalTrees.push(bundleTree);
 
     if (this.environment === 'test') {
+      this.debug('including unit tests in output');
       let unitTestsTree = this.compileUnitTests(compiledTree);
       finalTrees.push(unitTestsTree);
     }
 
-    let tree = new MergeTree(finalTrees, { overwrite: true });
+    finalTrees.push(this.packageFilesTree());
 
-    // Compiling on the fly, so eject the result. Only applies for addons really, but we
-    // need to invoke it here to ensure the ejection is recorded before invoking
-    // `mergeEjections`
-    if (this.parent) {
-      this.eject(tree, path.join(this.dir, 'dist'));
-    }
+    let tree = new MergeTree(finalTrees, { overwrite: true });
 
     return tree;
   }
 
+  /**
+   * Create trees that copy top level files over. Broccoli can't pick up
+   * top level files one-off, because Broccoli can't do one-off files.
+   * Which means Broccoli would have to watch the root directory, which
+   * includes the tmp directory where intermediate build steps are stored,
+   * resulting in an infinite loop (watch triggers build, touches tmp,
+   * triggers watch).
+   */
+  packageFilesTree() {
+    let files = this.packageFiles;
+    return new MergeTree(files.map((filepath) => {
+      let sourcepath = path.join(this.dir, filepath);
+      return writeFile(filepath, fs.readFileSync(sourcepath, 'utf-8'));
+    }));
+  }
+
+  /**
+   * Compile the unit tests - see UnitTestsTree for more details
+   */
   compileUnitTests(compiledTree: Tree) {
     let unitTestsTree = new Funnel(compiledTree, {
       include: globify([this.unitTestDir]),
@@ -124,58 +164,24 @@ export default abstract class BaseBuilder {
     return this.pkg.name;
   }
 
+  /**
+   * Wrapper method over assembleTree, used to cache the results
+   */
   toTree() {
     if (!this._cachedTree) {
-      let tree = this.assembleTree();
-      tree = this.mergeEjections(tree);
-      this._cachedTree = tree;
+      this._cachedTree = this.assembleTree();
     }
     return this._cachedTree;
   }
 
   /**
-   * Takes any registered ejections and merges them into the build pipeline,
-   * consolidating trees by ejection destination beforehand.
-   *
-   * Denali supports building addons on-the-fly. This is useful if you are
-   * developing an addon and have it symlinked into an app for testing, or if
-   * you include an addon via a git repo dependency (which means you won't get
-   * the built result, since addons don't check their compiled versions into
-   * source control).
-   *
-   * To optimize this process, Denali uses EjectTrees to take the result of the
-   * on-the-fly compilation and "eject" it out to wherever the addon source was
-   * read from. This means that if you have, for example, a git dep addon,
-   * Denali will build it the first time you build your app, eject the addon's
-   * compiled result to the addon's source folder in node_modules, and then
-   * re-use that on subsequent builds.
-   *
-   * However, because the CLI might build the runtime, the devtime, or both,
-   * we have to wait to insert the EjectTree into the build pipeline so that,
-   * if it's both, the runtime and devtime trees don't end up overwriting each
-   * other when they eject. In other words - for a given destination directory,
-   * there can only be one EjectTree that ejects there (since EjectTree wipes
-   * the output directory before ejecting).
-   *
-   * This method takes any ejections registered via `this.eject()`, and produces
-   * one EjectTree per output directory, and merges those EjectTrees into the
-   * build pipeline.
-   *
-   * @param tree the tree to merge eject trees into
+   * Create a single base tree from the source directories. Multiple
+   * consumers can use this base tree to ensure deduplication of the
+   * starting point.
    */
-  protected mergeEjections(tree: Tree): Tree {
-    if (this.ejections.size === 0) {
-      return tree;
-    }
-    let ejections: Tree[] = Array.from(this.ejections).map(([ destination, ejectionTrees ]) => {
-      let mergedEjectionsForDestination = new MergeTree(ejectionTrees, { overwrite: true, annotation: `merge ejections for ${ destination }` });
-      return new EjectTree(mergedEjectionsForDestination, destination);
-    });
-    return new MergeTree(ejections.concat(tree), { overwrite: true, annotation: 'merge ejections' });
-  }
-
   protected toBaseTree(): Tree {
     let sources = this.sources();
+    this.debug(`creating base tree from: ${ sources.map((s) => `${s}/`).join(',') }`);
     sources = sources.map((dir) => {
       if (typeof dir === 'string') {
         let localpath = path.join(this.dir, dir);
@@ -189,28 +195,30 @@ export default abstract class BaseBuilder {
     return new MergeTree(sources, { overwrite: true, annotation: 'baseTree' });
   }
 
+  /**
+   * Compile the project. Defaults to running the process* hooks, but
+   * can be extended to do more.
+   */
   protected compile(tree: Tree): Tree {
     tree = this.processHooks(tree);
     return tree;
   }
 
+  /**
+   * Run processSelf and processParent hooks
+   */
   protected processHooks(tree: Tree): Tree {
     if (this.processSelf) {
+      this.debug('running processSelf');
       tree = this.processSelf(tree, this.dir);
     }
     this.addons.forEach((addonBuilder) => {
       if (addonBuilder.processParent) {
+        this.debug(`running processParent hook from ${ addonBuilder.pkg.name }`);
         tree = addonBuilder.processParent(tree, this.dir);
       }
     });
     return tree;
-  }
-
-  protected eject(tree: Tree, destination: string) {
-    if (!this.ejections.has(destination)) {
-      this.ejections.set(destination, []);
-    }
-    this.ejections.get(destination).push(tree);
   }
 
   abstract bundle(tree: Tree): Tree;

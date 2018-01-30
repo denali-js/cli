@@ -19,6 +19,7 @@ export default class AppBuilder extends BaseBuilder {
       baseDir: this.dir
     });
     let addonBundles = this.addons.map((addon) => {
+      this.debug(`including ${ addon.pkg.name } fragment in app bundle`);
       return new Funnel(addon.toTree(), {
         include: [
           `*fragment.js`,

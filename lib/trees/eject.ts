@@ -35,7 +35,12 @@ export default class EjectTree extends (<new(...args: any[]) => Tree>Plugin) {
    */
   protected destDir: string;
 
-  constructor(inputTree: Tree, destDir: string, options: { tee?: boolean } = {}) {
+  /**
+   * @param options.tee if true, writes the input tree to both the output tree
+   * as well as the eject destination; if false, writes to eject destination
+   * only; defaults to false
+   */
+  constructor(inputTree: Tree, destDir: string, options: { tee?: true } = {}) {
     super([ inputTree ], options);
     this.destDir = destDir;
     this.tee = options.tee;
