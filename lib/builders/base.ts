@@ -7,14 +7,14 @@ import * as MergeTree from 'broccoli-merge-trees';
 import * as writeFile from 'broccoli-file-creator';
 import { sync as readPkg } from 'read-pkg';
 import AddonBuilder from './addon';
-import AppBuilder from './app';
 import globify from '../utils/globify';
 import UnitTests from '../trees/unit-tests';
 import * as createDebug from 'debug';
 // import { debug } from 'broccoli-stew';
 
+const debug = createDebug('denali-cli:builder');
 
-export default abstract class BaseBuilder {
+export default class BaseBuilder {
 
   /**
    * Creates the appropriate builder instance for the given directory.
@@ -24,10 +24,31 @@ export default abstract class BaseBuilder {
    * @param parent
    */
   static createFor(dir: string, environment: string, parent?: BaseBuilder): BaseBuilder {
+    debug(`creating builder for ${ dir }`);
     let localBuilderPath = path.join(dir, 'denali-build');
-    let LocalBuilderModule = require(localBuilderPath);
-    let LocalBuilder: typeof AddonBuilder | typeof AppBuilder = LocalBuilderModule.default || LocalBuilderModule;
-    return new LocalBuilder(dir, environment, parent);
+    let Builder: typeof BaseBuilder;
+    // Use the local denali-build.js file if present
+    if (fs.existsSync(localBuilderPath + '.js')) {
+      let LocalBuilderModule = require(localBuilderPath);
+      Builder = LocalBuilderModule.default || LocalBuilderModule;
+      debug('using local builder');
+    // Dummy apps
+    } else if (path.basename(dir) === 'dummy') {
+      Builder = require('./dummy').default;
+      debug('using default dummy builder');
+    } else {
+      let pkg = readPkg(dir);
+      // Addons
+      if (pkg.keywords && pkg.keywords.includes('denali-addon')) {
+        Builder = require('./addon').default;
+        debug('using default addon builder');
+      // Apps
+      } else {
+        Builder = require('./app').default;
+        debug('using default app builder');
+      }
+    }
+    return new Builder(dir, environment, parent);
   }
 
   dir: string;
@@ -52,14 +73,23 @@ export default abstract class BaseBuilder {
 
   protected debug: (msg: string) => void;
 
+  get logicalDependencyPath() {
+    let builder: BaseBuilder = this;
+    let depPath = [ builder.pkg.name ];
+    while (builder = builder.parent) {
+      depPath.unshift(builder.pkg.name);
+    }
+    return depPath;
+  }
+
   constructor(dir: string, environment: string, parent: BaseBuilder) {
     this.dir = dir;
     this.environment = environment;
     this.parent = parent;
     this.pkg = readPkg(dir);
 
-    this.debug = createDebug(`denali-cli:builder:${ this.pkg.name }@${ this.pkg.version }`);
-    this.debug(`creating builder for ${ this.pkg.name }@${ this.pkg.version }`);
+    this.debug = createDebug(`denali-cli:builder:${ this.logicalDependencyPath.join('>') }`);
+    this.debug(`created builder for ${ this.pkg.name }@${ this.pkg.version }`);
 
     this.addons = this.discoverAddons();
   }
@@ -200,6 +230,7 @@ export default abstract class BaseBuilder {
    * can be extended to do more.
    */
   protected compile(tree: Tree): Tree {
+    this.debug('compiling');
     tree = this.processHooks(tree);
     return tree;
   }
@@ -208,6 +239,7 @@ export default abstract class BaseBuilder {
    * Run processSelf and processParent hooks
    */
   protected processHooks(tree: Tree): Tree {
+    this.debug('running hooks');
     if (this.processSelf) {
       this.debug('running processSelf');
       tree = this.processSelf(tree, this.dir);
@@ -221,6 +253,8 @@ export default abstract class BaseBuilder {
     return tree;
   }
 
-  abstract bundle(tree: Tree): Tree;
+  bundle(tree: Tree): Tree {
+    throw new Error('Bundle method not implemented!');
+  }
 
 }

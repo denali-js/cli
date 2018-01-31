@@ -7,7 +7,6 @@ import Concat from '../trees/concat';
 import EjectTree from '../trees/eject';
 // import { debug } from 'broccoli-stew';
 
-
 const bundleFragmentOpen = template(fs.readFileSync(path.join(__dirname, '..', 'templates', 'bundle-fragment-open.ejs'), 'utf-8'));
 const bundleFragmentClose = fs.readFileSync(path.join(__dirname, '..', 'templates', 'bundle-fragment-close.ejs'), 'utf-8');
 
@@ -30,7 +29,7 @@ export default class AddonBuilder extends BaseBuilder {
       this.debug('no build needed, using precompiled');
       return path.join(this.dir, 'dist');
     }
-    this.debug('building');
+    this.debug('not precompiled - building now');
 
     let tree = super.assembleTree();
 

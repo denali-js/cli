@@ -134,7 +134,12 @@ export default class CommandAcceptanceTest {
     // will land in the real dist folder. This will result in concurrency bugs
     // if two command acceptance tests are running simultaneously and trying to
     // read/write from the same real dist directory.
-    fs.copySync(path.join(this.projectRoot, 'dist'), path.join(tmpNodeModules, projectPkg.name, 'dist'));
+    //
+    // We check if dist exists first because some addons might be build-only,
+    // which means they won't create a dist folder on build
+    if (fs.existsSync(path.join(this.projectRoot, 'dist'))) {
+      fs.copySync(path.join(this.projectRoot, 'dist'), path.join(tmpNodeModules, projectPkg.name, 'dist'));
+    }
   }
 
   /**
