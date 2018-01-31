@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.19"></a>
+## [0.0.19](https://github.com/denali-js/denali-cli/compare/v0.0.18...v0.0.19) (2018-01-31)
+
+
+### Bug Fixes
+
+* **blueprints:** app application adapter incorrect import ([#47](https://github.com/denali-js/denali-cli/issues/47)) ([fee8c63](https://github.com/denali-js/denali-cli/commit/fee8c63))
+
+
+### Features
+
+* add lib/index.js manifest file for addons ([#41](https://github.com/denali-js/denali-cli/issues/41)) ([3ee213e](https://github.com/denali-js/denali-cli/commit/3ee213e))
+* significantly improve CLI startup times ([#42](https://github.com/denali-js/denali-cli/issues/42)) ([a511d66](https://github.com/denali-js/denali-cli/commit/a511d66))
+
+
+
 <a name="0.0.18"></a>
 ## [0.0.18](https://github.com/denali-js/denali-cli/compare/v0.0.17...v0.0.18) (2018-01-31)
 
