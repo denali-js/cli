@@ -38,12 +38,7 @@ export default function findAddons(isLocal: boolean): AddonSummary[] {
     return finalizeAddons(addons);
   }
 
-  let npmRoot = execSync('npm root -g').toString().trim();
-  debug(`searching for addons globally in npm root: ${ npmRoot }`);
-  let addons = findPlugins(merge({
-    dir: npmRoot,
-    scanAllDirs: true
-  }, findOptions));
+  let addons;
 
   // Because yarn stores it's global modules separately, and doesn't yet support the `root` command,
   // we have to double check yarn's global installs for any denali addons. The easiest way of
@@ -52,13 +47,12 @@ export default function findAddons(isLocal: boolean): AddonSummary[] {
   // development of global addons (like denali itself)
   // TODO shell out to `yarn root` once yarnpkg/yarn#2388 is fixed
   if (commandExists('yarn')) {
-    let yarnGlobalInstalls = path.join(YarnConstants.GLOBAL_MODULE_DIRECTORY, 'node_modules');
+    let yarnGlobalInstalls = YarnConstants.GLOBAL_MODULE_DIRECTORY;
     debug(`searching for addons globally in yarn global installs: ${ yarnGlobalInstalls }`);
     if (fs.existsSync(yarnGlobalInstalls)) {
-      addons = addons.concat(findPlugins(merge({
-        dir: yarnGlobalInstalls,
-        scanAllDirs: true
-      }, findOptions)));
+      addons = findPlugins(merge({
+        dir: yarnGlobalInstalls
+      }, findOptions));
     } else {
       debug(`Tried to load globally installed addons from yarn, but ${ yarnGlobalInstalls } doesn't exist, skipping ...`);
     }
@@ -72,6 +66,13 @@ export default function findAddons(isLocal: boolean): AddonSummary[] {
     } else {
       debug(`Tried to load globally linked addons from yarn, but ${ yarnGlobalLinks } doesn't exist, skipping ...`);
     }
+  } else {
+    let npmRoot = execSync('npm root -g').toString().trim();
+    debug(`searching for addons globally in npm root: ${ npmRoot }`);
+    addons = findPlugins(merge({
+      dir: npmRoot,
+      scanAllDirs: true
+    }, findOptions));
   }
 
   return finalizeAddons(addons);

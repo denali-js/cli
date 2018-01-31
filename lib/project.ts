@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { Tree, Builder as Broccoli, BuildResults } from 'broccoli';
+// import { Tree, Builder as Broccoli, BuildResults } from 'broccoli';
 import * as rimraf from 'rimraf';
 import printSlowNodes from 'broccoli-slow-trees';
 import { sync as copyDereferenceSync } from 'copy-dereference';
@@ -81,11 +81,12 @@ export default class Project {
   }
 
   // TODO build descriptions
-  async _build(tree: Tree, destDir: string): Promise<void> {
+  async _build(tree: any, destDir: string): Promise<void> {
     try {
       debug('building project');
       let timer = startTimer();
       spinner.start(`Building ...`);
+      const Broccoli = require('broccoli').Builder;
       let broccoli = new Broccoli(tree);
       let results = await broccoli.build();
       await this.finishBuild(results, destDir);
@@ -116,9 +117,10 @@ export default class Project {
   /**
    * Build the project and start watching the source files for changes, rebuilding when they occur
    */
-  async _watch(tree: Tree, options: WatchOptions = {}) {
+  async _watch(tree: any, options: WatchOptions = {}) {
     spinner.start(`Watching ...`);
     let timer = startTimer();
+      const Broccoli = require('broccoli').Builder;
     let broccoli = new Broccoli(tree);
     let watcher = new Watcher(broccoli, { beforeRebuild: options.beforeRebuild, interval: 100 });
     let destDir = options.destDir || path.join(this.dir, 'dist');
@@ -192,7 +194,7 @@ export default class Project {
    * After a build completes, this method cleans up the result. It copies the results out of tmp and
    * into the output directory, and kicks off any optional behaviors post-build.
    */
-  finishBuild(results: BuildResults, destDir: string) {
+  finishBuild(results: { directory: string, graph: any }, destDir: string) {
     debug(`copying broccoli build output to dist`);
     rimraf.sync(destDir);
     copyDereferenceSync(path.resolve(results.directory), destDir);
