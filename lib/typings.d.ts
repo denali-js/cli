@@ -6,14 +6,32 @@ declare module "walk-sync";
 declare module "require-tree";
 declare module "read-pkg-up";
 declare module "read-pkg";
+declare module "pkg-dir";
 declare module "nested-error-stacks";
 declare module "dedent-js";
 declare module "nsp";
 declare module "ora";
-declare module "broccoli";
+declare module "broccoli" {
+  export type Tree = {};
+  export interface BuildResults {
+    directory: string;
+    graph: any;
+  }
+  export class Builder {
+    constructor(treeToBuild: Tree);
+    cleanup(): void;
+    build(): Promise<BuildResults>;
+  }
+}
 declare module "broccoli-slow-trees";
 declare module "broccoli-plugin";
 declare module "broccoli-funnel";
+declare module "broccoli-filter";
+declare module "broccoli-concat/concat";
+declare module "fast-sourcemap-concat";
+declare module "source-map-url";
+declare module "inline-source-map-comment";
+declare module "symlink-or-copy";
 declare module "broccoli-stew";
 declare module "broccoli-file-creator";
 declare module "broccoli-merge-trees";

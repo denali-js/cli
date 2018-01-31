@@ -1,4 +1,4 @@
-import { Tree } from './builder';
+import { Tree } from 'broccoli';
 import { Watcher } from 'broccoli/lib';
 import { resolve } from 'bluebird';
 import {

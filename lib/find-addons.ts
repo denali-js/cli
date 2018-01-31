@@ -79,11 +79,7 @@ export default function findAddons(isLocal: boolean): AddonSummary[] {
 
 function finalizeAddons(addons: AddonSummary[]) {
   addons.forEach((addon) => {
-    if (addon.pkg.mainDir) {
-      addon.distDir = path.join(addon.dir, addon.pkg.mainDir);
-    } else {
-      addon.distDir = addon.dir;
-    }
+    addon.distDir = path.join(addon.dir, 'dist');
   });
   let addonDebugList = addons.map((addon) => {
     return `  - ${ addon.pkg.name } [${ addon.dir }]\n`;

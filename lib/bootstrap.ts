@@ -54,7 +54,7 @@ export default function run(projectPkg?: any)  {
 
     debug(`found ${ keys(addonCommands).length } commands from ${ addon.pkg.name }: [ ${ keys(addonCommands).join(', ') } ] `);
     if (addon.pkg.name === 'denali') {
-      assert(keys(addonCommands).length > 0, 'Denali package was found, but unable to load core commands - is your Denali installation corrupted?');
+      assert(keys(addonCommands).length > 0, 'Denali package was found, but no core commands were found. Is your Denali installation corrupted?');
       coreCommands = addonCommands;
 
       let denaliInstallType: string;
