@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.18"></a>
+## [0.0.18](https://github.com/denali-js/denali-cli/compare/v0.0.17...v0.0.18) (2018-01-31)
+
+
+### Bug Fixes
+
+* add `main-dir` require to ava config in package.json for app/addon blueprints ([#38](https://github.com/denali-js/denali-cli/issues/38)) ([dc63223](https://github.com/denali-js/denali-cli/commit/dc63223)), closes [#37](https://github.com/denali-js/denali-cli/issues/37)
+* update addon babel plugin ([#45](https://github.com/denali-js/denali-cli/issues/45)) ([36d9961](https://github.com/denali-js/denali-cli/commit/36d9961))
+* update app babel plugin config ([#44](https://github.com/denali-js/denali-cli/issues/44)) ([36f381f](https://github.com/denali-js/denali-cli/commit/36f381f))
+* **blueprint:** Set engines.node to >= 7.6 ([#43](https://github.com/denali-js/denali-cli/issues/43)) ([aed47cf](https://github.com/denali-js/denali-cli/commit/aed47cf))
+* **blueprints:** rename raw -> json serializer in app blueprint index action ([1341067](https://github.com/denali-js/denali-cli/commit/1341067))
+
+
+### Features
+
+* bundled builds ([#49](https://github.com/denali-js/denali-cli/issues/49)) ([69c1ce2](https://github.com/denali-js/denali-cli/commit/69c1ce2))
+
+
+
 <a name="0.0.17"></a>
 ## [0.0.17](https://github.com/denali-js/denali-cli/compare/v0.0.16...v0.0.17) (2017-10-01)
 
