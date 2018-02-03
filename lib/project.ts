@@ -120,7 +120,7 @@ export default class Project {
   async _watch(tree: any, options: WatchOptions = {}) {
     spinner.start(`Watching ...`);
     let timer = startTimer();
-      const Broccoli = require('broccoli').Builder;
+    const Broccoli = require('broccoli').Builder;
     let broccoli = new Broccoli(tree);
     let watcher = new Watcher(broccoli, { beforeRebuild: options.beforeRebuild, interval: 100 });
     let destDir = options.destDir || path.join(this.dir, 'dist');

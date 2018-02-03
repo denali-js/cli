@@ -63,7 +63,7 @@ export default function run(projectPkg?: any)  {
       } else {
         denaliInstallType = 'global';
       }
-      ui.info(` | denali v${ addon.pkg.version } [${ denaliInstallType }]\n`);
+      ui.info(` | denali v${ addon.pkg.version } [${ denaliInstallType }]`);
 
     } else {
       commands = Object.assign(commands, addonCommands);
