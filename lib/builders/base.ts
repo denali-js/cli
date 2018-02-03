@@ -100,11 +100,12 @@ export default class BaseBuilder {
    * package.json's. Then create a Builder for each one.
    */
   protected discoverAddons(): AddonBuilder[] {
+    this.debug(`searching for child addons in ${ this.dir }`);
     return findPlugins({
       dir: this.dir,
       keyword: 'denali-addon',
       sort: true,
-      includeDev: true,
+      includeDev: !this.parent, // only include devdeps if this is the root builder
       configName: 'denali'
     }).map((addon) => {
       this.debug(`discovered child addon: ${ addon.pkg.name }`);
