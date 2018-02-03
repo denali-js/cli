@@ -78,7 +78,7 @@
     "dedent-js": "^1.0.1",
     "dotenv": "^4.0.0",
     "fast-sourcemap-concat": "^1.2.3",
-    "find-plugins": "^1.1.4",
+    "find-plugins": "^1.1.5",
     "fs-extra": "^4.0.1",
     "glob": "^7.1.2",
     "inline-source-map-comment": "^1.0.5",
