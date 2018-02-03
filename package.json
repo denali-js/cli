@@ -16,6 +16,9 @@
   "engines": {
     "node": ">=7"
   },
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "denali",
     "cli",
