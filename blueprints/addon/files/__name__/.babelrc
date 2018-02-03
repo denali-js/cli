@@ -1,13 +1,17 @@
 {
+  "presets": [
+    ["env", {
+      "targets": {
+        "node": "current"
+      }
+    }]
+  ],
   "plugins": [
-    "transform-exponentiation-operator",
-    "syntax-trailing-function-commas",
-    "transform-class-properties",
-    "transform-es2015-modules-commonjs",
-    "transform-runtime"
+    ["transform-class-properties", { "spec": true }]
   ],
   "ignore": [
     "blueprints/*/files/**",
-    "test/dummy/**"
+    "test/dummy/**",
+    "denali-build.js"
   ]
 }

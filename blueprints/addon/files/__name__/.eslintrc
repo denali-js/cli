@@ -1,3 +1,10 @@
 {
-  "extends": "denali"
+  "extends": "eslint:recommended",
+  "parser": "babel-eslint",
+  "env": {
+    "node": true
+  },
+  "parserOptions": {
+    "sourceType": "module"
+  }
 }

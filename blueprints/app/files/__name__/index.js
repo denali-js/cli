@@ -1,4 +1,4 @@
-const bundle = require('./dist/<%= name %>.runtime');
+const bundle = require('./dist/<%= name %>.bundle');
 const container = bundle();
 
 const Application = container.lookup('app:application');
