@@ -111,7 +111,7 @@ export default class AddonBuilder extends BaseBuilder {
       version: this.pkg.version
     };
     tree = new Concat(tree, {
-      main: this.pkg.main,
+      main: this.pkg.main.replace(/^dist\//, ''),
       header: bundleFragmentOpen(data),
       footer: bundleFragmentClose,
       wrapAsModules: true,
