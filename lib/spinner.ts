@@ -14,39 +14,41 @@ export default {
   /**
    * Start the spinner with the given message
    */
-  start(msg: string, id?: string) {
-    queue('start', msg, id);
+  async start(msg: string, id?: string) {
+    await queue('start', msg, id);
   },
   /**
    * Stop the spinner, replace the spinner graphic with a checkmark, optionally update the message,
    * and turn it green.
    */
-  succeed(msg?: string, id?: string) {
-    queue('succeed', msg, id);
+  async succeed(msg?: string, id?: string) {
+    await queue('succeed', msg, id);
   },
   /**
    * Stop the spinner, replace the spinner graphic with an X, optionally update the message, and
    * turn it red.
    */
-  fail(msg?: string, id?: string) {
-    queue('fail', msg, id);
+  async fail(msg?: string, id?: string) {
+    await queue('fail', msg, id);
   },
   /**
    * Stop the spinner, replace the spinner graphic with the supplied symbol and message with the
    * supplied text.
    */
-  finish(symbol: string, text: string, id?: string) {
-    queue('finish', symbol, text, id);
+  async finish(symbol: string, text: string, id?: string) {
+    await queue('finish', symbol, text, id);
   }
 };
 
-let operationsQueue: { operation: string, args: any[] }[] = [];
+let operationsQueue: { operation: string, args: any[], done(): void }[] = [];
 let inFlight = false;
 let spinnerIsActive = false;
 
-function queue(operation: string, ...args: any[]): void {
-  operationsQueue.push({ operation, args });
-  flushQueue();
+async function queue(operation: string, ...args: any[]): Promise<void> {
+  return new Promise<void>((done) => {
+    operationsQueue.push({ done, operation, args });
+    flushQueue();
+  });
 }
 
 function flushQueue() {
@@ -67,6 +69,7 @@ function flushQueue() {
       if (nextOperation.operation !== 'start') {
         spinnerIsActive = false;
       }
+      nextOperation.done();
       flushQueue();
     });
   }
