@@ -1,15 +1,24 @@
 import * as path from 'path';
+import * as fs from 'fs';
+import * as assert from 'assert';
 import AppBuilder from './app';
 import AddonBuilder from './addon';
 import * as MergeTree from 'broccoli-merge-trees';
+import * as writeFile from 'broccoli-file-creator';
 import * as Funnel from 'broccoli-funnel';
 
 export default class DummyBuilder extends AppBuilder {
 
+  packageFiles = [ 'package.json' ];
+
   addonBuilderUnderTest: AddonBuilder;
 
+  get addonDirUnderTest() {
+    return path.join(this.dir, '..', '..');
+  }
+
   discoverAddons(): AddonBuilder[] {
-    let addons = super.discoverAddons();
+    let addons = super.discoverAddons({ include: [ this.addonDirUnderTest ] });
     this.flagAddonUnderTest(addons);
     return addons;
   }
@@ -23,8 +32,8 @@ export default class DummyBuilder extends AppBuilder {
    * We should find a better way to detect the addon under test.
    */
   protected flagAddonUnderTest(addons: AddonBuilder[]) {
-    let dirForAddonUnderTest = path.join(this.dir, '..', '..');
-    this.addonBuilderUnderTest = addons.find((addonBuilder) => addonBuilder.dir === dirForAddonUnderTest);
+    this.addonBuilderUnderTest = addons.find((addonBuilder) => addonBuilder.dir === this.addonDirUnderTest);
+    assert(this.addonBuilderUnderTest, 'Unable to find the builder for the addon under test');
     this.addonBuilderUnderTest.underTest = true;
   }
 
@@ -51,11 +60,14 @@ export default class DummyBuilder extends AppBuilder {
     // should work automatically, since node will walk up from tmp/-dummy to
     // find the addon's real node_modules folder, and check there. But this
     // won't work for the addon itself, hence:
+    let addonPackageFiles = [ 'denali-build.js', 'package.json' ].map((file) => {
+      return writeFile(path.join('node_modules', this.addonBuilderUnderTest.pkg.name, file), fs.readFileSync(path.join(this.addonBuilderUnderTest.dir, file), 'utf-8'));
+    });
     let compiledAddon = new Funnel(addonTree, {
       exclude: [ 'test' ],
-      destDir: `node_modules/${this.addonBuilderUnderTest.pkg.name}`
+      destDir: `node_modules/${this.addonBuilderUnderTest.pkg.name}/dist`
     });
-    return new MergeTree([ tree, addonTests, compiledAddon ], { annotation: 'merge addon tests into dummy' });
+    return new MergeTree([ tree, addonTests, ...addonPackageFiles, compiledAddon ], { overwrite: true, annotation: 'merge addon tests into dummy' });
   }
 
 }

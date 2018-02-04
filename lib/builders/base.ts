@@ -67,7 +67,7 @@ export default class BaseBuilder {
 
   unitTestDir = path.join('test', 'unit');
 
-  packageFiles = [ 'package.json' ];
+  packageFiles: string[] = [];
 
   private _cachedTree: Tree;
 
@@ -91,7 +91,6 @@ export default class BaseBuilder {
     this.debug = createDebug(`denali-cli:builder:${ this.logicalDependencyPath.join('>') }`);
     this.debug(`created builder for ${ this.pkg.name }@${ this.pkg.version }`);
 
-    this.addons = this.discoverAddons();
   }
 
   /**
@@ -99,14 +98,15 @@ export default class BaseBuilder {
    * mentioned in package.json, and look for the `denali-addon` keyword in their
    * package.json's. Then create a Builder for each one.
    */
-  protected discoverAddons(): AddonBuilder[] {
+  protected discoverAddons(options: { include: string[] } = { include: [] }): AddonBuilder[] {
     this.debug(`searching for child addons in ${ this.dir }`);
     return findPlugins({
       dir: this.dir,
       keyword: 'denali-addon',
       sort: true,
-      includeDev: !this.parent, // only include devdeps if this is the root builder
-      configName: 'denali'
+      includeDev: true,
+      configName: 'denali',
+      include: options.include
     }).map((addon) => {
       this.debug(`discovered child addon: ${ addon.pkg.name }`);
       return <AddonBuilder>BaseBuilder.createFor(addon.dir, this.environment, this);
@@ -134,6 +134,7 @@ export default class BaseBuilder {
    * Assemble the main build pipeline
    */
   assembleTree() {
+    this.addons = this.discoverAddons();
     let baseTree = this.toBaseTree();
     let finalTrees: Tree[] = [];
 
