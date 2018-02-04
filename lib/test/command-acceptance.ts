@@ -210,10 +210,10 @@ export default class CommandAcceptanceTest {
         let output = d.toString();
         stderrBuffer += output;
         combinedBuffer += output;
-        if (options.failOnStderr) {
+        if (options.failOnStderr && stderrBuffer.match(/A-z0-9/)) {
           process.removeListener('exit', cleanup);
           this.cleanup();
-          reject(new FailOnStderrError(this.dir, this.command, combinedBuffer));
+          reject(new FailOnStderrError(this.dir, this.command, combinedBuffer, output));
         }
       });
 
@@ -274,12 +274,14 @@ class CommandFinishedError extends Error {
 }
 
 class FailOnStderrError extends Error {
-  constructor(public dir: string, public command: string, output: string) {
+  constructor(public dir: string, public command: string, output: string, stderr: string) {
     super(dedent`
-      Command acceptance test failed: command printed to stderr, and you have failOnStderr enabled
-
-      ${ dir }
-      $ ${ command }
+      ==> Command acceptance test failed: command printed to stderr, and you have failOnStderr enabled
+      ==> Test directory: ${ dir }
+      ==> Test command: $ ${ command }
+      ==> stderr output:
+      ${ stderr }
+      ==> complete output:
       ${ output }
     `);
     this.stack = '';
