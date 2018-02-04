@@ -35,8 +35,9 @@
     "typescript": "^2.4.2"
   },
   "scripts": {
-    "build": "npm run build:clean && npm run build:compile && npm run build:bin && npm run build:templates",
-    "build:clean": "rm -rf dist coverage .nyc_output",
+    "build": "npm run build:clean && npm run build:blueprints && npm run build:compile && npm run build:bin && npm run build:templates",
+    "build:clean": "rm -rf dist coverage .nyc_output && mkdir dist",
+    "build:blueprints": "cp -R blueprints dist/blueprints",
     "build:compile": "tsc",
     "build:bin": "mv dist/bin/denali.js dist/bin/denali && chmod +x dist/bin/denali",
     "build:templates": "cp -r lib/templates dist/lib/templates",
