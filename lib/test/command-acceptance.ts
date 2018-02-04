@@ -3,6 +3,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import * as tmp from 'tmp';
+import { sync as glob } from 'glob';
 import * as dedent from 'dedent-js';
 import * as createDebug from 'debug';
 import symlinkAll from '../utils/symlink-all';
@@ -125,21 +126,18 @@ export default class CommandAcceptanceTest {
     fs.mkdirSync(tmpNodeModules);
     // We symlink all the node_modules from our addon into the throwaway's node_modules
     symlinkAll(path.join(this.projectRoot, 'node_modules'), tmpNodeModules);
-    // Then we symlink the addon itself over as a dependency of the dummy app
-    symlinkAll(this.projectRoot, path.join(tmpNodeModules, projectPkg.name), { except: [ 'tmp', 'dist', 'node_modules' ]});
-    // But we copy (not symlink) the dist folder over, because if the command
-    // under test compiles the throwaway app, and this addon gets compiled along
-    // with it, it will try to write the compiled addon into the dist folder.
-    // But if that folder is symlinked to the real addon dist folder, the writes
-    // will land in the real dist folder. This will result in concurrency bugs
-    // if two command acceptance tests are running simultaneously and trying to
-    // read/write from the same real dist directory.
-    //
-    // We check if dist exists first because some addons might be build-only,
-    // which means they won't create a dist folder on build
-    if (fs.existsSync(path.join(this.projectRoot, 'dist'))) {
-      fs.copySync(path.join(this.projectRoot, 'dist'), path.join(tmpNodeModules, projectPkg.name, 'dist'));
-    }
+    // Then we copy the addon itself over as a dependency of the dummy app
+    // (just the publishable parts)
+    [
+      'package.json',
+      '*.md',
+      'dist/**/*',
+      'denali-build.js'
+    ].forEach((pattern) => {
+      glob(pattern, { cwd: this.projectRoot }).forEach((file) => {
+        fs.copySync(path.join(this.projectRoot, file), path.join(tmpNodeModules, projectPkg.name, file));
+      });
+    });
   }
 
   /**
