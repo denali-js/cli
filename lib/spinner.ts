@@ -62,7 +62,14 @@ function flushQueue() {
       spinnerIsActive = true;
     }
     childChannel.ref();
-    childSpinner.send(nextOperation);
+    try {
+      childSpinner.send(nextOperation);
+    } catch(e) {
+      // most likely the child process is dead because it
+      // received the sigint while this process was blocked
+      // on some build step - we're likely about to shut
+      // down ourselves
+    }
     childSpinner.once('message', () => {
       childChannel.unref();
       inFlight = false;
