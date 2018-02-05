@@ -61,8 +61,11 @@ export default class DummyBuilder extends AppBuilder {
     // find the addon's real node_modules folder, and check there. But this
     // won't work for the addon itself, hence:
     let addonPackageFiles = [ 'denali-build.js', 'package.json' ].map((file) => {
-      return writeFile(path.join('node_modules', this.addonBuilderUnderTest.pkg.name, file), fs.readFileSync(path.join(this.addonBuilderUnderTest.dir, file), 'utf-8'));
-    });
+      let sourceFilePath = path.join(this.addonBuilderUnderTest.dir, file);
+      if (fs.existsSync(sourceFilePath)) {
+        return writeFile(path.join('node_modules', this.addonBuilderUnderTest.pkg.name, file), fs.readFileSync(sourceFilePath, 'utf-8'));
+      }
+    }).filter(Boolean);
     let compiledAddon = new Funnel(addonTree, {
       exclude: [ 'test' ],
       destDir: `node_modules/${this.addonBuilderUnderTest.pkg.name}/dist`
