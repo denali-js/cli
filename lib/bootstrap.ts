@@ -92,17 +92,15 @@ export default function run(projectPkg?: any)  {
     }
   });
 
+  let versions = dedent`
+    node ${ process.versions.node }
+    openssl ${ process.versions.openssl }
+  `;
+
   argParser
   .wrap(Math.min(100, argParser.terminalWidth()))
   .help()
-  .version(() => {
-    let versions = [];
-    versions.push(
-      `node ${ process.versions.node }`,
-      `openssl ${ process.versions.openssl }`
-    );
-    return versions.join(`\n`);
-  })
+  .version(versions)
   .parse(process.argv.slice(2), { projectPkg });
 }
 

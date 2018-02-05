@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { execSync, ExecSyncOptions } from 'child_process';
 import { sync as commandExists } from 'command-exists';
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import * as walk from 'walk-sync';
 import * as mkdirp from 'mkdirp';
 import * as rimraf from 'rimraf';

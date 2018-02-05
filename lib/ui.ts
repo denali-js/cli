@@ -1,4 +1,4 @@
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 
 // tslint:disable:no-console no-invalid-this
 

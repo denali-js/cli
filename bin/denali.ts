@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { satisfies } from 'semver';
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as NestedError from 'nested-error-stacks';
