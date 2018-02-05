@@ -65,7 +65,8 @@ export default class Blueprint extends Command {
    * Can be overriden/extended by individual addons
    */
   public static renamedFiles: any = {
-      gitignore: '.gitignore'
+      gitignore: '.gitignore',
+      package: 'package.json'
   };
 
   /**
