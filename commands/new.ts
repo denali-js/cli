@@ -21,7 +21,7 @@ export default class NewCommand extends Command {
 
   async run(argv: any) {
     ui.info('\n');
-    AppBlueprint.dir = path.join(__dirname, '..', '..', 'blueprints', 'app');
+    AppBlueprint.dir = path.join(__dirname, '..', 'blueprints', 'app');
     let appBlueprint = new AppBlueprint();
     await appBlueprint.generate(argv);
   }

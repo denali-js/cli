@@ -21,7 +21,7 @@ export default class NewCommand extends Command {
 
   async run(argv: any) {
     ui.info('\n');
-    AddonBlueprint.dir = path.join(__dirname, '..', '..', 'blueprints', 'addon');
+    AddonBlueprint.dir = path.join(__dirname, '..', 'blueprints', 'addon');
     let addonBlueprint = new AddonBlueprint();
     await addonBlueprint.generate(argv);
   }
