@@ -1,18 +1,24 @@
 import * as path from 'path';
-// import { Tree, Builder as Broccoli, BuildResults } from 'broccoli';
 import * as rimraf from 'rimraf';
 import printSlowNodes from 'broccoli-slow-trees';
 import { sync as copyDereferenceSync } from 'copy-dereference';
 import * as createDebug from 'debug';
 import { sync as glob } from 'glob';
 import * as NestedError from 'nested-error-stacks';
-import Builder from './builders/base';
+import Builder, { BuilderOptions } from './builders/base';
 import Watcher from './watcher';
 import ui from './ui';
 import spinner from './spinner';
 import startTimer from './timer';
 
 const debug = createDebug('denali-cli:project');
+
+export interface ProjectOptions {
+  dir?: string;
+  docs?: true;
+  environment?: string;
+  printSlowTrees?: true;
+}
 
 export interface WatchOptions {
   builder?: Builder;
@@ -65,13 +71,19 @@ export default class Project {
    */
   printSlowTrees: boolean;
 
+  builderOptions: BuilderOptions;
+
   /**
    * Creates an instance of Project
    */
-  constructor(options: { dir?: string, environment?: string, printSlowTrees?: boolean } = {}) {
+  constructor(options: ProjectOptions = {}) {
     this.dir = options.dir || process.cwd();
     debug(`creating project for ${ this.dir }`);
     this.environment = options.environment || 'development';
+    this.builderOptions = {
+      environment: this.environment,
+      docs: options.docs
+    };
     this.printSlowTrees = options.printSlowTrees;
     this.pkg = require(path.join(this.dir, 'package.json'));
   }
@@ -103,13 +115,13 @@ export default class Project {
   }
 
   async build(destDir: string = path.join(this.dir, 'dist')) {
-    let builder = Builder.createFor(this.dir, this.environment);
+    let builder = Builder.createFor(this.dir, this.builderOptions);
     let tree = builder.toTree();
     return this._build(tree, destDir);
   }
 
   async buildDummy(destDir: string = path.join(this.dir, 'dist')) {
-    let builder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this.environment);
+    let builder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this.builderOptions);
     let tree = builder.toTree();
     return this._build(tree, destDir);
   }
@@ -156,13 +168,13 @@ export default class Project {
   }
 
   async watch(options: WatchOptions = {}) {
-    let builder = Builder.createFor(this.dir, this.environment);
+    let builder = Builder.createFor(this.dir, this.builderOptions);
     let tree = builder.toTree();
     return this._watch(tree, options);
   }
 
   async watchDummy(options: WatchOptions = {}) {
-    let builder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this.environment);
+    let builder = Builder.createFor(path.join(this.dir, 'test', 'dummy'), this.builderOptions);
     let tree = builder.toTree();
     return this._watch(tree, options);
   }

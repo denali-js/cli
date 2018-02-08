@@ -81,13 +81,13 @@ export default class AddonBuilder extends BaseBuilder {
    * conditions.
    */
   shouldEject() {
-    let isRootBuilder = !this.parent;
+    let isRootBuilder = !this.options.parent;
     let isAddonUnderTest = this.underTest;
     return !isRootBuilder && !isAddonUnderTest;
   }
 
   shouldBuild(): boolean {
-    let isRootBuilder = !this.parent;
+    let isRootBuilder = !this.options.parent;
     let isDeveloping = this.isDevelopingAddon();
     let isAddonUnderTest = this.underTest;
     let isSymlinked = false;
@@ -122,7 +122,7 @@ export default class AddonBuilder extends BaseBuilder {
   }
 
   unitTestBundleName() {
-    return this.parent.pkg.name;
+    return this.options.parent.pkg.name;
   }
 
 }

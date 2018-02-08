@@ -10,9 +10,16 @@ import AddonBuilder from './addon';
 import globify from '../utils/globify';
 import UnitTests from '../trees/unit-tests';
 import * as createDebug from 'debug';
+import { ExtracterTree as DocumentationExtracter } from 'documenter';
 // import { debug } from 'broccoli-stew';
 
 const debug = createDebug('denali-cli:builder');
+
+export interface BuilderOptions {
+  environment: string;
+  parent?: BaseBuilder;
+  docs?: true;
+}
 
 export default class BaseBuilder {
 
@@ -23,7 +30,7 @@ export default class BaseBuilder {
    * @param environment
    * @param parent
    */
-  static createFor(dir: string, environment: string, parent?: BaseBuilder): BaseBuilder {
+  static createFor(dir: string, options: BuilderOptions): BaseBuilder {
     debug(`creating builder for ${ dir }`);
     let localBuilderPath = path.join(dir, 'denali-build');
     let Builder: typeof BaseBuilder;
@@ -48,14 +55,12 @@ export default class BaseBuilder {
         debug('using default app builder');
       }
     }
-    return new Builder(dir, environment, parent);
+    return new Builder(dir, options);
   }
 
   dir: string;
 
   environment: string;
-
-  parent: BaseBuilder;
 
   addons: AddonBuilder[];
 
@@ -73,19 +78,21 @@ export default class BaseBuilder {
 
   protected debug: (msg: string) => void;
 
+  protected options: BuilderOptions;
+
   get logicalDependencyPath() {
     let builder: BaseBuilder = this;
     let depPath = [ builder.pkg.name ];
-    while (builder = builder.parent) {
+    while (builder = builder.options.parent) {
       depPath.unshift(builder.pkg.name);
     }
     return depPath;
   }
 
-  constructor(dir: string, environment: string, parent: BaseBuilder) {
+  constructor(dir: string, options: BuilderOptions) {
     this.dir = dir;
-    this.environment = environment;
-    this.parent = parent;
+    this.environment = options.environment;
+    this.options = options;
     this.pkg = readPkg(dir);
 
     this.debug = createDebug(`denali-cli:builder:${ this.logicalDependencyPath.join('>') }`);
@@ -109,7 +116,10 @@ export default class BaseBuilder {
       include: options.include
     }).map((addon) => {
       this.debug(`discovered child addon: ${ addon.pkg.name }`);
-      return <AddonBuilder>BaseBuilder.createFor(addon.dir, this.environment, this);
+      return <AddonBuilder>BaseBuilder.createFor(addon.dir, {
+        environment: this.environment,
+        parent: this
+      });
     });
   }
 
@@ -118,7 +128,7 @@ export default class BaseBuilder {
    * the main build pipeline?
    */
   protected sources(): (string | Tree)[] {
-    let dirs = [ 'app', 'config', 'lib', 'blueprints', 'commands', 'config', 'test' ];
+    let dirs = [ 'app', 'config', 'lib', 'blueprints', 'commands', 'config', 'guides', 'test' ];
     return dirs;
   }
 
@@ -137,6 +147,11 @@ export default class BaseBuilder {
     this.addons = this.discoverAddons();
     let baseTree = this.toBaseTree();
     let finalTrees: Tree[] = [];
+
+    if (this.shouldBuildDocs()) {
+      let docsTree = this.docs(baseTree);
+      finalTrees.push(docsTree);
+    }
 
     let compiledTree = this.compile(baseTree);
     finalTrees.push(compiledTree);
@@ -175,6 +190,18 @@ export default class BaseBuilder {
       let sourcepath = path.join(this.dir, filepath);
       return writeFile(filepath, fs.readFileSync(sourcepath, 'utf-8'));
     }));
+  }
+
+  shouldBuildDocs(): boolean {
+    return this.options.docs || this.environment === 'production';
+  }
+
+  docs(baseTree: Tree): Tree {
+    return new DocumentationExtracter(baseTree, {
+      dir: this.dir,
+      pagesDir: 'guides',
+      sourceDirs: [ 'app', 'lib' ]
+    });
   }
 
   /**
