@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.20"></a>
+## [0.0.20](https://github.com/denali-js/denali-cli/compare/v0.0.19...v0.0.20) (2018-02-08)
+
+
+### Bug Fixes
+
+* **blueprints:** rename package.json blueprints ([e362ee6](https://github.com/denali-js/denali-cli/commit/e362ee6))
+* delay addon discovery until we know it will be needed (i.e. the addon will be built) ([9592fd3](https://github.com/denali-js/denali-cli/commit/9592fd3))
+* **blueprints:** update blueprints to match recent changes to denali babel ([485495a](https://github.com/denali-js/denali-cli/commit/485495a))
+* add files config to package json to ensure correct files are published ([eb74be5](https://github.com/denali-js/denali-cli/commit/eb74be5))
+* check if addon package files exist before attempting to copy into dummy app build ([4e47684](https://github.com/denali-js/denali-cli/commit/4e47684))
+* copy top level files into dummy throwaway app for command acceptance tests ([c9107e0](https://github.com/denali-js/denali-cli/commit/c9107e0))
+* ensure that failOnStderr errors only occur when meaningful output is printed to stderr ([aec2a86](https://github.com/denali-js/denali-cli/commit/aec2a86))
+* fix blueprint paths ([a492deb](https://github.com/denali-js/denali-cli/commit/a492deb))
+* ignore errors when unable to communicate with spinner process ([48888d8](https://github.com/denali-js/denali-cli/commit/48888d8))
+* only search devDeps for addons for top level builders, since 2nd level devDeps are not installed normally ([67db53b](https://github.com/denali-js/denali-cli/commit/67db53b))
+* reenable sourcemaps ([a5dfff6](https://github.com/denali-js/denali-cli/commit/a5dfff6))
+* remove dist from main paths when bundling ([ede072a](https://github.com/denali-js/denali-cli/commit/ede072a))
+* remove newline from default CLI output ([0fbec35](https://github.com/denali-js/denali-cli/commit/0fbec35))
+* remove unused jscodeshift pkg ([96aeeb6](https://github.com/denali-js/denali-cli/commit/96aeeb6))
+* update addon blueprint config files, index.js and config files for dummy ([43f3e4f](https://github.com/denali-js/denali-cli/commit/43f3e4f))
+
+
+### Features
+
+* add support for docs builds ([c784672](https://github.com/denali-js/denali-cli/commit/c784672))
+* make spinner API async to allow consumers to wait for spinner process ack ([9d3e43a](https://github.com/denali-js/denali-cli/commit/9d3e43a))
+* remove add/remove route methods for now ([2b3ca95](https://github.com/denali-js/denali-cli/commit/2b3ca95))
+* remove some folder types from app blueprint ([ccc6c5d](https://github.com/denali-js/denali-cli/commit/ccc6c5d))
+
+
+
 <a name="0.0.19"></a>
 ## [0.0.19](https://github.com/denali-js/denali-cli/compare/v0.0.18...v0.0.19) (2018-01-31)
 
