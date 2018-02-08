@@ -1,4 +1,3 @@
-declare module "try-require";
 declare module "copy-dereference";
 declare module "is-directory";
 declare module "jscodeshift";
@@ -9,7 +8,6 @@ declare module "read-pkg";
 declare module "pkg-dir";
 declare module "nested-error-stacks";
 declare module "dedent-js";
-declare module "nsp";
 declare module "ora";
 declare module "broccoli" {
   export type Tree = {};
@@ -26,11 +24,9 @@ declare module "broccoli" {
 declare module "broccoli-slow-trees";
 declare module "broccoli-plugin";
 declare module "broccoli-funnel";
-declare module "broccoli-filter";
 declare module "broccoli-concat/concat";
 declare module "fast-sourcemap-concat";
 declare module "source-map-url";
-declare module "inline-source-map-comment";
 declare module "symlink-or-copy";
 declare module "broccoli-stew";
 declare module "broccoli-file-creator";

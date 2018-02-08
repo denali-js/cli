@@ -1,9 +1,9 @@
 ---
 language: node_js
 node_js:
-  - "6.9"
-  - "7"
+  - "7.6"
   - "8"
+  - "9"
 before_script:
   - git config --global user.email "davewasmer@gmail.com"
   - git config --global user.name "Dave Wasmer"
