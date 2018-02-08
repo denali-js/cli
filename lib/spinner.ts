@@ -64,7 +64,7 @@ function flushQueue() {
     childChannel.ref();
     try {
       childSpinner.send(nextOperation);
-    } catch(e) {
+    } catch (e) {
       // most likely the child process is dead because it
       // received the sigint while this process was blocked
       // on some build step - we're likely about to shut
@@ -89,9 +89,9 @@ export function wrapOutputStream(stream: Writable) {
     if (spinnerIsActive) {
       readline.clearLine(mockOriginalStream, 0);
       readline.cursorTo(mockOriginalStream, 0);
-      chunk = chunk.toString();
-      if (!chunk.endsWith('\n')) {
-        chunk = chunk + '\n';
+      let chunkStr = chunk.toString();
+      if (!chunkStr.endsWith('\n')) {
+        chunkStr = `${ chunkStr }\n`;
       }
     }
     return originalWrite(chunk, encoding, callback);

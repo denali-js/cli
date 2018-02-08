@@ -101,7 +101,7 @@ export default class Project {
       const Broccoli = require('broccoli').Builder;
       let broccoli = new Broccoli(tree);
       let results = await broccoli.build();
-      await this.finishBuild(results, destDir);
+      this.finishBuild(results, destDir);
       debug('project build finished');
       spinner.succeed(`${ this.pkg.name } build complete (${ timer.stop() }s)`);
     } catch (err) {

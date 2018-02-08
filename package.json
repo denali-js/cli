@@ -1,20 +1,20 @@
 {
   "name": "denali-cli",
   "version": "0.0.20",
-  "description": "The official CLI for starting, building, and running Denali apps and addons",
+  "description": "The official CLI for creating, building, and running Denali apps and addons",
   "homepage": "http://denali.js.org",
   "repository": "denali-js/denali-cli",
   "author": {
     "name": "Dave Wasmer",
     "email": "davewasmer@gmail.com",
-    "url": "davewasmer.com"
+    "url": "http://davewasmer.com"
   },
   "bin": {
     "denali": "dist/bin/denali"
   },
   "main": "dist/lib/index.js",
   "engines": {
-    "node": ">=7"
+    "node": ">=7.6"
   },
   "files": [
     "dist"
@@ -41,7 +41,7 @@
     "build:bin": "mv dist/bin/denali.js dist/bin/denali && chmod +x dist/bin/denali",
     "build:templates": "cp -r lib/templates dist/lib/templates",
     "prepublishOnly": "npm run build",
-    "lint": "! tslint --project tsconfig.json -c tslint.json --type-check | sed \"s|$PWD/||\" | grep ERROR",
+    "lint": "! tslint --project tsconfig.json -c tslint.json | sed \"s|$PWD/||\" | grep ERROR",
     "test": "npm run lint && npm run build && nyc ava dist/test/acceptance"
   },
   "license": "MIT",

@@ -6,7 +6,6 @@
     "arrow-return-shorthand": true,
     "class-name": true,
     "comment-format": [ true, "check-space" ],
-    "completed-docs": [ true, "classes", "functions", "methods", "properties" ],
     "curly": true,
     "eofline": true,
     "import-spacing": true,
@@ -32,7 +31,6 @@
     "no-empty-interface": true,
     "no-empty": true,
     "no-eval": true,
-    "no-floating-promises": true,
     "no-for-in-array": true,
     "no-inferrable-types": [ true, "ignore-params" ],
     "no-internal-module": true,
@@ -77,7 +75,6 @@
         "variable-declaration": "onespace"
       }
     ],
-    "typeof-compare": true,
     "unified-signatures": true,
     "use-isnan": true,
     "whitespace": [ true, "check-branch", "check-decl", "check-operator", "check-module", "check-separator", "check-type" ]
