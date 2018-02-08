@@ -83,7 +83,6 @@
     "glob": "^7.1.2",
     "inline-source-map-comment": "^1.0.5",
     "is-directory": "^0.3.1",
-    "jscodeshift": "^0.4.0",
     "lodash": "^4.17.5",
     "main-dir": "^1.0.2",
     "mkdirp": "^0.5.1",
