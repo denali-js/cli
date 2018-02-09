@@ -19,7 +19,7 @@ test('generates an addon', async (t) => {
   let filesToCheck = [
     'app/addon.js',
     '.gitignore',
-    'test/dummy/app/application.js',
+    'test/dummy/app/application.js'
   ];
   filesToCheck.forEach((file) => {
     let pathToCheck = path.join(addonCommand.dir, 'denali-new-addon', file);
