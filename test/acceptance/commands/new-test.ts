@@ -16,8 +16,12 @@ test('generates an app', async (t) => {
   });
   await newCommand.run({ failOnStderr: true });
 
-  let generatedFilepath = path.join(newCommand.dir, 'my-denali-app', 'app', 'application.js');
-  t.true(fs.existsSync(generatedFilepath), 'file should be generated');
-  let gitignorePath = path.join(newCommand.dir, 'my-denali-app', '.gitignore');
-  t.true(fs.existsSync(gitignorePath), 'gitignore should be generated');
+  let filesToCheck = [
+    'app/application.js',
+    '.gitignore'
+  ];
+  filesToCheck.forEach((file) => {
+    let pathToCheck = path.join(newCommand.dir, 'my-denali-app', file);
+    t.true(fs.existsSync(pathToCheck), `${ file } should be generated`);
+  });
 });

@@ -1,6 +1,5 @@
 /* tslint:disable:completed-docs no-empty no-invalid-this member-access */
 import test from 'ava';
-import { each } from 'lodash';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import * as tmp from 'tmp';
@@ -17,13 +16,13 @@ test('generates an addon', async (t) => {
   });
   await addonCommand.run({ failOnStderr: true });
 
-  let filesToCheck = {
-    'app/addon.js': 'addon main file',
-    '.gitignore': '.gitignore',
-    'test/dummy/app/application.js': 'dummy app file'
-  };
-  each(filesToCheck, (description, file) => {
+  let filesToCheck = [
+    'app/addon.js',
+    '.gitignore',
+    'test/dummy/app/application.js',
+  ];
+  filesToCheck.forEach((file) => {
     let pathToCheck = path.join(addonCommand.dir, 'denali-new-addon', file);
-    t.true(fs.existsSync(pathToCheck), `${ description } should be generated`);
+    t.true(fs.existsSync(pathToCheck), `${ file } should be generated`);
   });
 });
