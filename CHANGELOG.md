@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.22"></a>
+## [0.0.22](https://github.com/denali-js/denali-cli/compare/v0.0.21...v0.0.22) (2018-02-09)
+
+
+### Bug Fixes
+
+* fix "meaningful output" regex for failOnStderr ([7f7c63a](https://github.com/denali-js/denali-cli/commit/7f7c63a))
+* handle case where yarn links directory does not exist ([1145c4d](https://github.com/denali-js/denali-cli/commit/1145c4d))
+
+
+### Features
+
+* allow global CLI invocations without install denali core ([d321ca8](https://github.com/denali-js/denali-cli/commit/d321ca8))
+
+
+
 <a name="0.0.21"></a>
 ## [0.0.21](https://github.com/denali-js/denali-cli/compare/v0.0.20...v0.0.21) (2018-02-08)
 
