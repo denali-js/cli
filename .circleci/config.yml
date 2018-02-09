@@ -21,6 +21,12 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
+      - run:
+          name: Configure git user info
+          command: |
+            git config --global user.email "test@denalijs.org"
+            git config --global user.name "Denali"
+
       - run: yarn install
 
       - save_cache:
