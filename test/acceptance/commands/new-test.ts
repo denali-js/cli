@@ -14,7 +14,7 @@ test('generates an app', async (t) => {
       prefix: `new-command`
     }).name
   });
-  await newCommand.run({ failOnStderr: true });
+  await newCommand.run({ failOnStderr: !process.version.startsWith('7') });
 
   let filesToCheck = [
     'app/application.js',

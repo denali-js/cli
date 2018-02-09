@@ -39,12 +39,6 @@ export default function findAddons(isLocal: boolean): AddonSummary[] {
 
   let addons: PluginSummary[] = [];
 
-  // Because yarn stores it's global modules separately, and doesn't yet support the `root` command,
-  // we have to double check yarn's global installs for any denali addons. The easiest way of
-  // determining that location is to simply include yarn and require it directly. Ugly, but until
-  // they add `root`, our best option. We have to do the same for linked packages to allow for
-  // development of global addons (like denali itself)
-  // TODO shell out to `yarn root` once yarnpkg/yarn#2388 is fixed
   if (commandExists('yarn')) {
     let yarnGlobal = execSync('yarn global dir').toString().trim();
     let yarnGlobalInstalls = path.join(yarnGlobal, 'node_modules');
