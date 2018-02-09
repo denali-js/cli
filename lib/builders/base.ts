@@ -10,7 +10,7 @@ import AddonBuilder from './addon';
 import globify from '../utils/globify';
 import UnitTests from '../trees/unit-tests';
 import * as createDebug from 'debug';
-import { ExtracterTree as DocumentationExtracter } from 'documenter';
+import { ExtracterTree as DocumentationExtracter } from '@denali-js/documenter';
 // import { debug } from 'broccoli-stew';
 
 const debug = createDebug('denali-cli:builder');
@@ -198,7 +198,8 @@ export default class BaseBuilder {
 
   docs(baseTree: Tree): Tree {
     return new DocumentationExtracter(baseTree, {
-      dir: this.dir,
+      projectName: this.pkg.name,
+      projectVersion: this.pkg.version,
       pagesDir: 'guides',
       sourceDirs: [ 'app', 'lib' ]
     });
