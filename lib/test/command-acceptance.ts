@@ -210,7 +210,7 @@ export default class CommandAcceptanceTest {
         let output = d.toString();
         stderrBuffer += output;
         combinedBuffer += output;
-        if (options.failOnStderr && stderrBuffer.match(/A-z0-9/)) {
+        if (options.failOnStderr && stderrBuffer.match(/[A-z0-9]/)) {
           process.removeListener('exit', cleanup);
           this.cleanup();
           reject(new FailOnStderrError(this.dir, this.command, combinedBuffer, output));
