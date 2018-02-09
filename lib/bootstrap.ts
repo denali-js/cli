@@ -70,12 +70,10 @@ export default function run(projectPkg?: any)  {
     }
   });
 
-  if (!coreCommands) {
-    ui.warn('Core commands not found. If you are developing Denali itself, you need to install Denali globally.');
+  if (coreCommands) {
+    // Core commands take precedence over others
+    commands = Object.assign(commands, coreCommands);
   }
-
-  // Core commands take precedence over others
-  commands = Object.assign(commands, coreCommands);
 
   // Special-case denali-cli commands
   globalCommands = discoverCommands(commands, 'denali-cli', path.join(__dirname, '..', 'commands'));
