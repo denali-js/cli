@@ -5,9 +5,9 @@ import chalk from 'chalk';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as NestedError from 'nested-error-stacks';
-import * as resolve from 'resolve';
+import { sync as resolve } from 'resolve';
 import { sync as readPkgUp } from 'read-pkg-up';
-import * as pkgDir from 'pkg-dir';
+import { sync as pkgDir } from 'pkg-dir';
 
 /* tslint:disable:no-console */
 
@@ -28,9 +28,9 @@ try {
   try {
     projectPkg = readPkgUp().pkg;
     let projectDir = pkgDir();
-    let localCliMain = resolve.sync('denali-cli', { basedir: projectDir });
+    let localCliMain = resolve('denali-cli', { basedir: projectDir });
     let localCliDir = pkgDir(localCliMain);
-    cliPkg = readPkgUp({ cwd: localCliMain });
+    cliPkg = readPkgUp({ cwd: localCliMain }).pkg;
     process.chdir(projectDir);
     source = fs.lstatSync(localCliDir).isSymbolicLink() ? 'linked' : 'local';
     cliBootstrapPath = path.join(localCliDir, 'dist/lib/bootstrap');
