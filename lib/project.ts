@@ -3,7 +3,7 @@ import * as rimraf from 'rimraf';
 import printSlowNodes from 'broccoli-slow-trees';
 import { sync as copyDereferenceSync } from 'copy-dereference';
 import * as createDebug from 'debug';
-import { sync as glob } from 'glob';
+import { sync as glob } from 'globby';
 import * as NestedError from 'nested-error-stacks';
 import Builder, { BuilderOptions } from './builders/base';
 import Watcher from './watcher';

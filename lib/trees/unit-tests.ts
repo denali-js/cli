@@ -4,7 +4,7 @@ import * as Plugin from 'broccoli-plugin';
 import { Tree } from 'broccoli';
 import * as SourceMapConcatenator from 'fast-sourcemap-concat';
 import { all } from 'bluebird';
-import * as glob from 'glob';
+import { sync as glob } from 'globby';
 import { template } from 'lodash';
 
 const unitTestOpen = template(fs.readFileSync(path.join(__dirname, '..', 'templates', 'unit-test-open.ejs'), 'utf-8'));
@@ -28,7 +28,7 @@ export default class UnitTestFilter extends (<new(...args: any[]) => Tree>Plugin
   }
 
   async build() {
-    let files = glob.sync('**/*.js', { nodir: true, cwd: this.inputPaths[0] });
+    let files = glob('**/*.js', { cwd: this.inputPaths[0] });
     let fileConcats = files.map(this.wrapFile.bind(this));
     return await all(fileConcats);
   }

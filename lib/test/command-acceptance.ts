@@ -3,7 +3,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import * as tmp from 'tmp';
-import { sync as glob } from 'glob';
+import { sync as glob } from 'globby';
 import * as dedent from 'dedent-js';
 import * as createDebug from 'debug';
 import symlinkAll from '../utils/symlink-all';
@@ -126,17 +126,15 @@ export default class CommandAcceptanceTest {
     fs.mkdirSync(tmpNodeModules);
     // We symlink all the node_modules from our addon into the throwaway's node_modules
     symlinkAll(path.join(this.projectRoot, 'node_modules'), tmpNodeModules);
-    // Then we copy the addon itself over as a dependency of the dummy app
-    // (just the publishable parts)
-    [
-      'package.json',
-      '*.md',
-      'dist/**/*',
-      'denali-build.js'
-    ].forEach((pattern) => {
-      glob(pattern, { cwd: this.projectRoot }).forEach((file) => {
-        fs.copySync(path.join(this.projectRoot, file), path.join(tmpNodeModules, projectPkg.name, file));
-      });
+    // Then we copy the addon itself over as a dependency of the dummy app.
+    // We want to treat it like a git dep in case the command tries to build
+    // the dummy app, which might try to build this addon. So copy over
+    // everything that isn't gitignored, but also copy dist in case we can
+    // use it.
+    glob('**/*', { cwd: this.projectRoot, gitignore: true })
+    .concat(glob('dist/**/*', { cwd: this.projectRoot }))
+    .forEach((file: string) => {
+      fs.copySync(path.join(this.projectRoot, file), path.join(tmpNodeModules, projectPkg.name, file));
     });
   }
 

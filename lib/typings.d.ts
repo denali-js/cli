@@ -31,10 +31,7 @@ declare module "symlink-or-copy";
 declare module "broccoli-stew";
 declare module "broccoli-file-creator";
 declare module "broccoli-merge-trees";
-declare module "yarn/lib/constants" {
-  export const GLOBAL_MODULE_DIRECTORY: string;
-  export const LINK_REGISTRY_DIRECTORY: string;
-}
+declare module "globby";
 declare module "command-exists";
 declare module "broccoli/lib" {
   class Watcher {
