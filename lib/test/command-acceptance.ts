@@ -30,6 +30,11 @@ export interface SpawnOptions {
 export default class CommandAcceptanceTest {
 
   /**
+   * Debug mode
+   */
+  debug: string | boolean;
+
+  /**
    * The command to invoke, i.e. 'build' would test the invocation of '$ denali
    * build'
    */
@@ -85,8 +90,12 @@ export default class CommandAcceptanceTest {
    * happening in a CommandAcceptanceTest
    * @param options.populateWithDummy Should the test directory be populated
    * with a copy of the dummy app?
+   * @param options.debug If true, DEBUG=* will bet set for the spawned command,
+   * and the output of the command will be streamed to the console. You can
+   * also supply a string which will be used as the value of DEBUG to reduce
+   * the noise.
    */
-  constructor(command: string, options: { dir?: string, environment?: string, name?: string, populateWithDummy?: boolean } = {}) {
+  constructor(command: string, options: { dir?: string, environment?: string, name?: string, populateWithDummy?: boolean, debug?: boolean | string } = {}) {
     this.command = command;
     this.dir = options.dir || (<any>tmp.dirSync({
       dir: 'tmp',
@@ -96,6 +105,7 @@ export default class CommandAcceptanceTest {
       unsafeCleanup: !process.env.DENALI_LEAVE_TMP,
       prefix: `command-acceptance-test-${ options.name || command }-`
     })).name;
+    this.debug = options.debug;
     this.environment = options.environment || 'development';
     this.projectRoot = process.cwd();
     // We don't use node_modules/.bin/denali because if denali-cli is linked in
@@ -183,10 +193,12 @@ export default class CommandAcceptanceTest {
   async spawn(options: SpawnOptions & { checkOutput: false | ((stdout: string, stderr: string, dir: string) => boolean) }) {
     return <any>new Promise((resolve, reject) => {
 
+      let env: { [key: string]: string } = { NODE_ENV: this.environment };
+      if (this.debug) {
+        env.DEBUG = this.debug === true ? '*' : this.debug;
+      }
       this.spawnedCommand = spawn(this.denaliPath, this.command.split(' '), {
-        env: Object.assign({}, process.env, {
-          NODE_ENV: this.environment
-        }, options.env || {}),
+        env: Object.assign({}, process.env, env, options.env || {}),
         cwd: this.dir,
         stdio: 'pipe'
       });
@@ -203,11 +215,17 @@ export default class CommandAcceptanceTest {
         let output = d.toString();
         stdoutBuffer += output;
         combinedBuffer += output;
+        if (this.debug) {
+          process.stdout.write(output);
+        }
       });
       this.spawnedCommand.stderr.on('data', (d) => {
         let output = d.toString();
         stderrBuffer += output;
         combinedBuffer += output;
+        if (this.debug) {
+          process.stderr.write(output);
+        }
         if (options.failOnStderr && stderrBuffer.match(/[A-z0-9]/)) {
           process.removeListener('exit', cleanup);
           this.cleanup();
