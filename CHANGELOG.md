@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.24"></a>
+## [0.0.24](https://github.com/denali-js/denali-cli/compare/v0.0.23...v0.0.24) (2018-02-10)
+
+
+### Bug Fixes
+
+* fix bin file local lookup ([985cffb](https://github.com/denali-js/denali-cli/commit/985cffb))
+
+
+### Features
+
+* add debug flag to command acceptance test ([c6d2fec](https://github.com/denali-js/denali-cli/commit/c6d2fec))
+
+
+
 <a name="0.0.23"></a>
 ## [0.0.23](https://github.com/denali-js/denali-cli/compare/v0.0.22...v0.0.23) (2018-02-10)
 
