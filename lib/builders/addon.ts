@@ -100,6 +100,10 @@ export default class AddonBuilder extends BaseBuilder {
     return isRootBuilder || isDeveloping || isAddonUnderTest || isSymlinked || isMissingCompiledOutput;
   }
 
+  shouldBuildDocs() {
+    return this.options.docs || this.environment === 'production';
+  }
+
   isDevelopingAddon(): boolean {
     return false;
   }

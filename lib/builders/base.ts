@@ -193,7 +193,7 @@ export default class BaseBuilder {
   }
 
   shouldBuildDocs(): boolean {
-    return this.options.docs || this.environment === 'production';
+    return false;
   }
 
   docs(baseTree: Tree): Tree {

@@ -12,6 +12,10 @@ const bundleClose = fs.readFileSync(path.join(__dirname, '..', 'templates', 'bun
 
 export default class AppBuilder extends BaseBuilder {
 
+  shouldBuildDocs() {
+    return this.options.docs || this.environment === 'development';
+  }
+
   bundle(tree: Tree): Tree {
     tree = new Concat(tree, {
       wrapAsModules: true,
