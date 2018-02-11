@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "build": "denali build",
+    "prepublishOnly": "npm run build",
     "test": "denali test"
   },
   "keywords": [
