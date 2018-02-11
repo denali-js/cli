@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.25"></a>
+## [0.0.25](https://github.com/denali-js/denali-cli/compare/v0.0.24...v0.0.25) (2018-02-11)
+
+
+### Bug Fixes
+
+* add prepublishOnly script to addon bluprint ([bef4ef8](https://github.com/denali-js/denali-cli/commit/bef4ef8))
+* only build docs in prod for addons - for apps, build docs in dev instead ([434f919](https://github.com/denali-js/denali-cli/commit/434f919))
+
+
+
 <a name="0.0.24"></a>
 ## [0.0.24](https://github.com/denali-js/denali-cli/compare/v0.0.23...v0.0.24) (2018-02-10)
 
