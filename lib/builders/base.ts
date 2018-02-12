@@ -18,7 +18,7 @@ const debug = createDebug('denali-cli:builder');
 export interface BuilderOptions {
   environment: string;
   parent?: BaseBuilder;
-  docs?: true;
+  docs?: boolean;
 }
 
 export default class BaseBuilder {
@@ -193,14 +193,14 @@ export default class BaseBuilder {
   }
 
   shouldBuildDocs(): boolean {
-    return false;
+    return this.options.docs;
   }
 
   docs(baseTree: Tree): Tree {
     return new DocumentationExtracter(baseTree, {
       projectName: this.pkg.name,
       projectVersion: this.pkg.version,
-      pagesDir: 'guides',
+      pagesDir: 'docs',
       sourceDirs: [ 'app', 'lib' ]
     });
   }

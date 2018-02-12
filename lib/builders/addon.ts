@@ -101,7 +101,10 @@ export default class AddonBuilder extends BaseBuilder {
   }
 
   shouldBuildDocs() {
-    return this.options.docs || this.environment === 'production';
+    if (this.options.docs != undefined) {
+      return this.options.docs;
+    }
+    return this.environment === 'production';
   }
 
   isDevelopingAddon(): boolean {
