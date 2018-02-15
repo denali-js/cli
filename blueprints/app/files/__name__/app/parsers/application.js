@@ -1,3 +1,3 @@
-import { JSONAPIParser } from 'denali';
+import { JSONParser } from 'denali';
 
-export default JSONAPIParser;
+export default JSONParser;

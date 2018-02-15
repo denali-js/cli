@@ -1,3 +1,3 @@
-import { JSONAPISerializer } from 'denali';
+import { JSONSerializer } from 'denali';
 
-export default JSONAPISerializer;
+export default JSONSerializer;
