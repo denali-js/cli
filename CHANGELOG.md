@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.0.26"></a>
+## [0.0.26](https://github.com/denali-js/denali-cli/compare/v0.0.25...v0.0.26) (2018-02-15)
+
+
+### Bug Fixes
+
+* allow explicit docs option values to override defaults either way ([d59dee4](https://github.com/denali-js/denali-cli/commit/d59dee4))
+* switch default app blueprint to use the simpler json(serializer/parser) ([0267ff1](https://github.com/denali-js/denali-cli/commit/0267ff1))
+
+
+
 <a name="0.0.25"></a>
 ## [0.0.25](https://github.com/denali-js/denali-cli/compare/v0.0.24...v0.0.25) (2018-02-11)
 
