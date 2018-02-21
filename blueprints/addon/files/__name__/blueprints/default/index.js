@@ -1,4 +1,4 @@
-import { Blueprint } from 'denali-cli';
+import { Blueprint } from '@denali-js/cli';
 
 // This blueprint is run when <%= name %> is installed via `denali install`. It's a good spot to
 // make any changes to the consuming app or addon, i.e. create a config file, add a route, etc

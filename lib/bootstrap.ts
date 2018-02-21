@@ -17,7 +17,7 @@ import findAddons from './find-addons';
 import * as dedent from 'dedent-js';
 import * as dotenv from 'dotenv';
 
-const debug = createDebug('denali-cli:bootstrap');
+const debug = createDebug('@denali-js/cli:bootstrap');
 
 process.on('unhandledRejection', (reason: any, promise: any) => {
   ui.warn('A promise was rejected but did not have a .catch() handler:');
@@ -41,7 +41,7 @@ export default function run(projectPkg?: any)  {
   // won't have a dependency on Denali, so it won't be able to load core commands like build and
   // test from a local copy of Denali.  So to get the core commands, we point it to the global
   // package instead.
-  let addons = findAddons(projectPkg && projectPkg.name !== 'denali');
+  let addons = findAddons(projectPkg && projectPkg.name !== '@denali-js/core');
 
   argParser.usage(dedent`
     Usage: denali <command> [options]
@@ -53,13 +53,13 @@ export default function run(projectPkg?: any)  {
     let addonCommands = discoverCommands(commands, addon.pkg.name, path.join(addon.distDir, 'commands'));
 
     debug(`found ${ keys(addonCommands).length } commands from ${ addon.pkg.name }: [ ${ keys(addonCommands).join(', ') } ] `);
-    if (addon.pkg.name === 'denali') {
+    if (addon.pkg.name === '@denali-js/core') {
       assert(keys(addonCommands).length > 0, 'Denali package was found, but no core commands were found. Is your Denali installation corrupted?');
       coreCommands = addonCommands;
 
       let denaliInstallType: string;
-      if (projectPkg && projectPkg.name !== 'denali') {
-        denaliInstallType = fs.lstatSync(path.join(process.cwd(), 'node_modules', 'denali')).isSymbolicLink() ? 'linked' : 'local';
+      if (projectPkg && projectPkg.name !== '@denali-js/core') {
+        denaliInstallType = fs.lstatSync(path.join(process.cwd(), 'node_modules', '@denali-js', 'core')).isSymbolicLink() ? 'linked' : 'local';
       } else {
         denaliInstallType = 'global';
       }
@@ -75,8 +75,8 @@ export default function run(projectPkg?: any)  {
     commands = Object.assign(commands, coreCommands);
   }
 
-  // Special-case denali-cli commands
-  globalCommands = discoverCommands(commands, 'denali-cli', path.join(__dirname, '..', 'commands'));
+  // Special-case @denali-js/cli commands
+  globalCommands = discoverCommands(commands, '@denali-js/cli', path.join(__dirname, '..', 'commands'));
 
   // Global commands take precendence over all
   commands = Object.assign(commands, globalCommands);
@@ -110,10 +110,12 @@ function discoverCommands(commandsSoFar: { [commandName: string]: typeof Command
   if (!fs.existsSync(dir)) {
     return {};
   }
-  if (addonName === 'denali') {
+  if (addonName === '@denali-js/core') {
     addonName = 'core';
   } else if (addonName.startsWith('denali-')) {
     addonName = addonName.slice('denali-'.length);
+  } else if (addonName.startsWith('@denali-js/')) {
+    addonName = addonName.slice('@denali-js/'.length);
   }
   // Load the commands
   let Commands: { [key: string]: typeof Command } = requireTree(dir, {

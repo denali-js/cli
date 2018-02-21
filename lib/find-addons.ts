@@ -8,7 +8,7 @@ import { execSync } from 'child_process';
 import { sync as commandExists } from 'command-exists';
 import * as createDebug from 'debug';
 
-const debug = createDebug('denali-cli:find-addons');
+const debug = createDebug('@denali-js/cli:find-addons');
 
 export interface AddonSummary extends PluginSummary {
   distDir?: string;

@@ -8,12 +8,12 @@ import { Argv as Yargs, Options as YargsOptions } from 'yargs';
 import * as createDebug from 'debug';
 import * as NestedError from 'nested-error-stacks';
 
-const debug = createDebug('denali-cli:command');
+const debug = createDebug('@denali-js/cli:command');
 
 /**
  * Represents a subcommand of the `denali` CLI.
  *
- * @module denali-cli
+ * @module @denali-js/cli
  */
 abstract class Command {
 

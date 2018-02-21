@@ -13,7 +13,7 @@ import * as createDebug from 'debug';
 import { ExtracterTree as DocumentationExtracter } from '@denali-js/documenter';
 // import { debug } from 'broccoli-stew';
 
-const debug = createDebug('denali-cli:builder');
+const debug = createDebug('@denali-js/cli:builder');
 
 export interface BuilderOptions {
   environment: string;
@@ -95,7 +95,7 @@ export default class BaseBuilder {
     this.options = options;
     this.pkg = readPkg(dir);
 
-    this.debug = createDebug(`denali-cli:builder:${ this.logicalDependencyPath.join('>') }`);
+    this.debug = createDebug(`@denali-js/cli:builder:${ this.logicalDependencyPath.join('>') }`);
     this.debug(`created builder for ${ this.pkg.name }@${ this.pkg.version }`);
 
   }

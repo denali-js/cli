@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "bluebird": "^3.5.1",
-    "denali": "0.0.x",
-    "denali-cli": "0.0.x",
+    "@denali-js/core": "^0.1.0",
+    "@denali-js/cli": "^0.1.0",
     "lodash": "^4.17.4"
   },
   "devDependencies": {
@@ -20,8 +20,8 @@
     "babel-eslint": "^8.2.1",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.6.1",
-    "denali-babel": "0.0.x",
-    "denali-eslint": "0.0.x"
+    "@denali-js/babel": "^0.1.0",
+    "@denali-js/eslint": "^0.1.0"
   },
   "ava": {
     "plugins": [],

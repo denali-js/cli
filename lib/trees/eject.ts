@@ -6,7 +6,7 @@ import { sync as copyDereferenceSync } from 'copy-dereference';
 import * as createDebug from 'debug';
 import * as symlinkOrCopy from 'symlink-or-copy';
 
-const debug = createDebug('denali-cli:eject-tree');
+const debug = createDebug('@denali-js/cli:eject-tree');
 
 /**
  * Broccoli only allows a single output folder per build. However, to support

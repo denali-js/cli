@@ -8,7 +8,7 @@ import * as dedent from 'dedent-js';
 import * as createDebug from 'debug';
 import symlinkAll from '../utils/symlink-all';
 
-const debug = createDebug('denali:test:command-acceptance');
+const debug = createDebug('@denali-js/core:test:command-acceptance');
 
 const MINUTE = 60 * 1000;
 
@@ -108,10 +108,10 @@ export default class CommandAcceptanceTest {
     this.debug = options.debug;
     this.environment = options.environment || 'development';
     this.projectRoot = process.cwd();
-    // We don't use node_modules/.bin/denali because if denali-cli is linked in
+    // We don't use node_modules/.bin/denali because if @denali-js/cli is linked in
     // via yarn, it doesn't add the binary symlinks to .bin. See
     // https://github.com/yarnpkg/yarn/issues/2493
-    this.denaliPath = path.join(this.projectRoot, 'node_modules', 'denali-cli', 'dist', 'bin', 'denali');
+    this.denaliPath = path.join(this.projectRoot, 'node_modules', '@denali-js', 'cli', 'dist', 'bin', 'denali');
 
     if (options.populateWithDummy !== false) {
       this.populateWithDummy();

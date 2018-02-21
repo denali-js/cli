@@ -11,7 +11,7 @@ import ui from './ui';
 import spinner from './spinner';
 import startTimer from './timer';
 
-const debug = createDebug('denali-cli:project');
+const debug = createDebug('@denali-js/cli:project');
 
 export interface ProjectOptions {
   dir?: string;
@@ -46,7 +46,7 @@ export interface WatchOptions {
  * the appropriate Builder class (AppBuilder/AddonBuilder), which in turn creates
  * AddonBuilders for any child addons in the dependency graph, and so on.
  *
- * @module denali-cli
+ * @module @denali-js/cli
  */
 
 export default class Project {
@@ -184,7 +184,7 @@ export default class Project {
    * perform actions based on the runtime state of the application, i.e. print a list of routes.
    *
    * Note: we don't type the return here as Promise<Application> in the code because that would
-   * introduce a hornet's nest of circular dependency (i.e. denali-cli -> denali -> denali-cli ...).
+   * introduce a hornet's nest of circular dependency (i.e. cli -> core -> cli ...).
    * But the documentation is correct here - the resolved value of the promise is an Applciation
    * instance. And consuming apps/addons already have a dependency on denali, so they can cast the
    * return value here to an Application.

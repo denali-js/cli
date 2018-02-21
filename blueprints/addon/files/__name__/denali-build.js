@@ -1,3 +1,3 @@
-const { AddonBuilder } = require('denali-cli');
+const { AddonBuilder } = require('@denali-js/cli');
 
 module.exports = class <%= className %>Builder extends AddonBuilder {};

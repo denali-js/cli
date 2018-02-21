@@ -28,7 +28,7 @@ try {
   try {
     projectPkg = readPkgUp().pkg;
     let projectDir = pkgDir();
-    let localCliMain = resolve('denali-cli', { basedir: projectDir });
+    let localCliMain = resolve('@denali-js/cli', { basedir: projectDir });
     let localCliDir = pkgDir(localCliMain);
     cliPkg = readPkgUp({ cwd: localCliMain }).pkg;
     process.chdir(projectDir);
@@ -45,7 +45,7 @@ try {
   try {
     require(cliBootstrapPath).default(projectPkg);
   } catch (error) {
-    throw new NestedError('\nError encountered while starting up denali-cli', error);
+    throw new NestedError('\nError encountered while starting up the Denali CLI', error);
   }
 } catch (e) {
   console.error(chalk.red(e.stack || e.message || e));

@@ -22,7 +22,7 @@ import findAddons from './find-addons';
 import Command from './command';
 import * as createDebug from 'debug';
 
-const debug = createDebug('denali-cli:blueprint');
+const debug = createDebug('@denali-js/cli:blueprint');
 // tslint:disable-next-line:completed-docs
 function run(cmd: string, options: ExecSyncOptions = {}) {
   return execSync(cmd, Object.assign({ stdio: 'pipe' }, options));
@@ -46,7 +46,7 @@ function run(cmd: string, options: ExecSyncOptions = {}) {
  * will only remove files that exactly match the what the blueprint generates, so if you modify a
  * file after it was generated, it won't be removed.
  *
- * @module denali-cli
+ * @module @denali-js/cli
  */
 export default class Blueprint extends Command {
 
@@ -83,7 +83,7 @@ export default class Blueprint extends Command {
   public static findBlueprints(projectPkg: any) {
     let blueprints: { [name: string]: typeof Blueprint } = {};
     // Special case denali itself, so it can access it's globally linked blueprints.
-    let addons = findAddons(projectPkg && projectPkg.name !== 'denali');
+    let addons = findAddons(projectPkg && projectPkg.name !== '@denali-js/core');
     debug(`discovering available blueprints from [ ${ addons.map((a) => a.pkg.name).join(', ') } ] addons`);
     addons.forEach((addon) => {
       this.discoverBlueprintsForAddon(blueprints, addon.pkg.name, path.join(addon.distDir, 'blueprints'));
