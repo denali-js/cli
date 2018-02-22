@@ -10,6 +10,7 @@ import * as Funnel from 'broccoli-funnel';
 export default class DummyBuilder extends AppBuilder {
 
   packageFiles = [ 'package.json' ];
+  bundleName = 'dummy';
 
   addonBuilderUnderTest: AddonBuilder;
 

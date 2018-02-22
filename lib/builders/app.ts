@@ -12,6 +12,8 @@ const bundleClose = fs.readFileSync(path.join(__dirname, '..', 'templates', 'bun
 
 export default class AppBuilder extends BaseBuilder {
 
+  bundleName = 'app';
+
   shouldBuildDocs() {
     if (this.options.docs != undefined) {
       return this.options.docs;
@@ -28,9 +30,10 @@ export default class AppBuilder extends BaseBuilder {
     let addonBundles = this.addons.map((addon) => {
       this.debug(`including ${ addon.pkg.name } fragment in app bundle`);
       return new Funnel(addon.toTree(), {
-        include: [
-          `*fragment.js`,
-          `*fragment.map`
+        destDir: addon.pkg.name,
+        files: [
+          `addon.fragment.js`,
+          `addon.fragment.map`
         ]
       });
     });
@@ -38,7 +41,7 @@ export default class AppBuilder extends BaseBuilder {
     tree = new Concat(tree, {
       header: bundleOpen({ pkgName: this.pkg.name, version: this.pkg.version }),
       footer: bundleClose,
-      outputFile: `${ this.pkg.name }.bundle.js`
+      outputFile: `${ this.bundleName }.bundle.js`
     });
     return tree;
   }
