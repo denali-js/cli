@@ -124,12 +124,13 @@ export default class Blueprint extends Command {
       .reduce<{ [key: string]: typeof Blueprint }>((BlueprintsSoFar, dirname: string) => {
         let BlueprintClass;
         try {
-          BlueprintClass = require(path.join(dir, dirname));
+          let Klass = require(path.join(dir, dirname));
+          BlueprintClass = Klass.default || Klass;
         } catch (e) {
           throw new NestedError(`Unable to load blueprint from ${ dir } -> ${ dirname }`, e);
         }
         BlueprintClass.addon = addonName;
-        BlueprintsSoFar[dirname] = BlueprintClass.default || BlueprintClass;
+        BlueprintsSoFar[dirname] = BlueprintClass;
         return BlueprintsSoFar;
       }, {});
     // Capture the source directory of the blueprint
