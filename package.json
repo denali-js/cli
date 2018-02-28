@@ -46,7 +46,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@denali-js/documenter": "^1.0.3",
+    "@denali-js/documenter": "^1.0.4",
     "@types/bluebird": "^3.5.20",
     "@types/debug": "^0.0.30",
     "@types/dotenv": "^4.0.2",
