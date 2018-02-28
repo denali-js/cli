@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.1.2"></a>
+## [0.1.2](https://github.com/denali-js/cli/compare/v0.1.1...v0.1.2) (2018-02-28)
+
+
+### Bug Fixes
+
+* fix app blueprint index file ([b036171](https://github.com/denali-js/cli/commit/b036171))
+* update documenter dep ([5e442c1](https://github.com/denali-js/cli/commit/5e442c1))
+
+
+
 <a name="0.1.1"></a>
 ## [0.1.1](https://github.com/denali-js/cli/compare/v0.1.0...v0.1.1) (2018-02-22)
 
