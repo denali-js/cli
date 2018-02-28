@@ -44,9 +44,9 @@
   dependencies:
     arrify "^1.0.1"
 
-"@denali-js/documenter@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@denali-js/documenter/-/documenter-1.0.4.tgz#427b1ebbf80bee02d8812e4a86158c6f5b9637ae"
+"@denali-js/documenter@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@denali-js/documenter/-/documenter-1.0.5.tgz#4196e444c020877bf7406a3fe95d2f4b795c302d"
   dependencies:
     "@types/debug" "^0.0.30"
     "@types/glob" "^5.0.35"
