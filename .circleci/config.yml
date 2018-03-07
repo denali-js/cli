@@ -30,7 +30,6 @@ jobs:
             git config --global user.email "test@denalijs.org"
             git config --global user.name "Denali"
       - run: yarn test
-      - run: yarn run coverage
 
   test-node-9:
     docker:
@@ -51,7 +50,6 @@ jobs:
             git config --global user.email "test@denalijs.org"
             git config --global user.name "Denali"
       - run: yarn test
-      - run: yarn run coverage
 
   release:
     working_directory: ~/repo
