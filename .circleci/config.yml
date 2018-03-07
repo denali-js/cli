@@ -24,6 +24,11 @@ jobs:
           paths:
             - node_modules
           key: dependencies-{{ checksum "yarn.lock" }}
+      - run:
+          name: Configure git user info
+          command: |
+            git config --global user.email "test@denalijs.org"
+            git config --global user.name "Denali"
       - run: yarn test
       - run: yarn run coverage
 
@@ -40,6 +45,11 @@ jobs:
           paths:
             - node_modules
           key: dependencies-{{ checksum "yarn.lock" }}
+      - run:
+          name: Configure git user info
+          command: |
+            git config --global user.email "test@denalijs.org"
+            git config --global user.name "Denali"
       - run: yarn test
       - run: yarn run coverage
 
