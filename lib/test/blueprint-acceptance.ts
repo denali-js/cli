@@ -14,7 +14,9 @@ export default class BlueprintAcceptanceTest extends CommandAcceptanceTest {
   blueprintName: string;
 
   constructor(blueprintName: string) {
-    super('');
+    super('', {
+      name: `blueprint-${ blueprintName }`
+    });
     this.blueprintName = blueprintName;
   }
 
