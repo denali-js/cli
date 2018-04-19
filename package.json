@@ -2,7 +2,7 @@
   "name": "@denali-js/cli",
   "version": "0.0.0-development",
   "description": "The official CLI for creating, building, and running Denali apps and addons",
-  "homepage": "http://denali.js.org",
+  "homepage": "http://denalijs.org",
   "repository": "denali-js/cli",
   "author": {
     "name": "Dave Wasmer",
