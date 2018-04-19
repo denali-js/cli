@@ -221,7 +221,7 @@ export default class BaseBuilder {
   }
 
   unitTestBundleName() {
-    return this.pkg.name;
+    return 'app';
   }
 
   /**
