@@ -129,8 +129,11 @@ export default class Blueprint extends Command {
         } catch (e) {
           throw new NestedError(`Unable to load blueprint from ${ dir } -> ${ dirname }`, e);
         }
+        // Assign name of blueprint to be namespaced by addon name if not a core blueprint
+        let isCoreBlueprint = addonName === '@denali-js/core' || addonName === '@denali-js/cli';
+        let blueprintKey = isCoreBlueprint ? dirname : `${ addonName }:${ dirname }`;
         BlueprintClass.addon = addonName;
-        BlueprintsSoFar[dirname] = BlueprintClass;
+        BlueprintsSoFar[blueprintKey] = BlueprintClass;
         return BlueprintsSoFar;
       }, {});
     // Capture the source directory of the blueprint
